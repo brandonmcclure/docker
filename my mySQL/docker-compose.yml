@@ -1,0 +1,26 @@
+version: '2'
+services:
+  mysql-lb:
+    image: rancher/lb-service-haproxy:v0.6.4
+    ports:
+    - 3306:3306/tcp
+    labels:
+      io.rancher.container.agent.role: environmentAdmin
+      io.rancher.container.create_agent: 'true'
+  mysql:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ROOT_HOST: "%"
+    stdin_open: true
+    tty: true
+    volumes_from:
+    - mysql-data
+    labels:
+      io.rancher.sidekicks: mysql-data
+  mysql-data:
+    image: busybox
+    volumes:
+    - /var/lib/mysql
+    labels:
+      io.rancher.container.start_once: 'true'
