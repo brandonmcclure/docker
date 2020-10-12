@@ -1,0 +1,29 @@
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+  cache:
+    blobdescriptor: inmemory
+  filesystem:
+    rootdirectory: /var/lib/registry
+auth:
+  htpasswd:
+    realm: registry_realm
+    path: /auth/htpasswd
+http:
+  addr: ":5000"
+  host: https://localhost:5000
+  tls: 
+    certificate: /certs/cert.crt
+    key: /certs/cert.key 
+  debug:
+    addr: ":5001"
+    prometheus:
+      enabled: true
+      path: "/metrics"
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3
