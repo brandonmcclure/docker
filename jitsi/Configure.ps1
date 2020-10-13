@@ -1,6 +1,7 @@
 #Requires -Version 7.0
 # https://jitsi.github.io/handbook/docs/devops-guide/devops-guide-docker
 # You need to git clone https://github.com/jitsi/docker-jitsi-meet and then copy this script into the git repo. Run this script with your settings and then docker-compose up
+# If you have issues getting the LetsEncrypt cert on the web site/are still getting the default/wildcard self signed cert that is default then prune: docker system prune -a
 
 $HTTPPort = "80"
 $HTTPSPort = "443"
@@ -76,12 +77,14 @@ Remove-Item -Path "$(Split-Path $filePath -Parent)\.env" -ErrorAction Ignore
 Move-Item -Path $tempFilePath -Destination "$(Split-Path $filePath -Parent)\.env" -Force
 
 # Create CONFIG directories
-
-New-Item -Path "$($PSScriptRoot)\jitsi-meet-cfg\web\letsencrypt" -ItemType Directory -Force
-New-Item -Path "$($PSScriptRoot)\jitsi-meet-cfg\transcripts" -ItemType Directory -Force
-New-Item -Path "$($PSScriptRoot)\jitsi-meet-cfg\prosody\config" -ItemType Directory -Force
-New-Item -Path "$($PSScriptRoot)\jitsi-meet-cfg\prosody\prosody-plugins-custom" -ItemType Directory -Force
-New-Item -Path "$($PSScriptRoot)\jitsi-meet-cfg\jicofo" -ItemType Directory -Force
-New-Item -Path "$($PSScriptRoot)\jitsi-meet-cfg\jvb" -ItemType Directory -Force
-New-Item -Path "$($PSScriptRoot)\jitsi-meet-cfg\jigasi" -ItemType Directory -Force
-New-Item -Path "$($PSScriptRoot)\jitsi-meet-cfg\jibri" -ItemType Directory -Force
+If (Test-Path "$($PSScriptRoot)\$CONFIG_PATH"){
+    Remove-Item "$($PSScriptRoot)\$CONFIG_PATH" -Recurse -Force
+}
+New-Item -Path "$($PSScriptRoot)\$CONFIG_PATH\web\letsencrypt" -ItemType Directory -Force
+New-Item -Path "$($PSScriptRoot)\$CONFIG_PATH\transcripts" -ItemType Directory -Force
+New-Item -Path "$($PSScriptRoot)\$CONFIG_PATH\prosody\config" -ItemType Directory -Force
+New-Item -Path "$($PSScriptRoot)\$CONFIG_PATH\prosody\prosody-plugins-custom" -ItemType Directory -Force
+New-Item -Path "$($PSScriptRoot)\$CONFIG_PATH\jicofo" -ItemType Directory -Force
+New-Item -Path "$($PSScriptRoot)\$CONFIG_PATH\jvb" -ItemType Directory -Force
+New-Item -Path "$($PSScriptRoot)\$CONFIG_PATH\jigasi" -ItemType Directory -Force
+New-Item -Path "$($PSScriptRoot)\$CONFIG_PATH\jibri" -ItemType Directory -Force

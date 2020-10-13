@@ -2,6 +2,9 @@
 # Setup a Ubuntu VM in azure with docker and powershell to allow me to bootstrap a jitsi instance
 # DO NOT USE THIS IN PRODUCTION
 # Copied from https://stackoverflow.com/questions/54916851/install-docker-and-docker-compose-on-azure-using-cloud-init
+# 
+# Make sure you setup a cron job to update your duckdns entry
+# 0 0-21/6 * * * curl http://www.duckdns.org/update/<YourDomain>/<yourKey>
 package_update: true
 
 # Setup swap memory
@@ -33,6 +36,7 @@ runcmd:
     - [ sh,-c,'sudo snap install powershell --classic']
     - [ sh,-c, 'mkdir -p /opt/jitsi']
     - [ sh,-c, 'git clone https://github.com/jitsi/docker-jitsi-meet'] 
+    
 # Add default auto created user to docker group
 system_info:
     default_user:
