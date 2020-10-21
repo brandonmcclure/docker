@@ -1,0 +1,6 @@
+# this YamlLint configuration is desgined to run for Docker-Compose.yaml files
+
+extends: default
+
+rules:
+  line-length: disable  # don't bother me with this rule
