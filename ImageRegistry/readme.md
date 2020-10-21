@@ -5,6 +5,7 @@ We need a repository of images that we will build/deploy to as well as pull from
 
 This is designed to run with `docker-compose up -d --build` It will run a container for cfssl to run as a intermediate CA, and then the registry app will get a certificate from this container. It also has a UI, grafana and prometheus attached to it as well. 
 
+This expects a CA certificate (`docker.crt`) and key (`docker.key`) for signing, and a `ca-bundle.crt` bundle/chain of the signing cert/up to the root CA located at `/mountpoints/ca`
 # Volume backups
 There are 2 powershell scripts to help with the backup and restore of the registry volume. 
 

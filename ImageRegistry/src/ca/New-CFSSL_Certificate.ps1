@@ -1,7 +1,9 @@
 $body = '{
 	"request": {
 		"hosts": [
-			"ImageRegistry"
+			"ImageRegistry",
+			"localhost",
+			"127.0.0.1"
 		],
 		"names": [
 			{
@@ -25,14 +27,23 @@ if ($result.success -ne "True"){
     Write-Error "response completed, but CFSSL reports failure" -ErrorAction Stop
 }
 
-Write-Host "Creating cert.crt file from response"
-$result.result.certificate | Out-File cert.crt
+Write-Host "Getting cert request from response"
+$cert = $result.result | select-object certificate_request
 
 
 Write-Host "Creating cert.key file from response"
 $result.result.private_key | Out-File cert.key
+
+$body = $($cert | ConvertTo-Json)
+#$body = $($body | ConvertFrom-Json) | select *,@{Name="Bundle";Expression={$true}} | ConvertTo-Json # Not sure if there is a need to bundle, I get an error when I do
+$result = $null
+$result = Invoke-RestMethod -Method Post -Uri http://ca:8888/api/v1/cfssl/sign -Body $body -ContentType Application/JSON
+$result | fl 
+Write-Host "Creating cert.crt file from signing response"
+$result.result.certificate | Out-File cert.crt
+
 Get-ChildItem /work
 Copy-Item -Path /work/cert.crt -Destination /certs/cert.crt
 Copy-Item -Path /work/cert.key -Destination /certs/cert.key 
 
-Get-ChildItem /certs
+tail -f /dev/null
