@@ -1,0 +1,3 @@
+This compose is me messing around with CoreDNS for my home network. The `Configure.ps1` script can be used to generate a Corefile and a .db file for CoreDNS. This is working for me/my needs, and I look forward to diving into more [plugins](https://coredns.io/plugins/)
+
+You will need to update the prometheus.yml target, I could not get this to work nicly without using my DNS entry to my host running this. 

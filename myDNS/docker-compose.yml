@@ -1,0 +1,51 @@
+# Instructions
+#
+# Run the Configure.ps1 script to generate a .env file with a random admin password for Grafana, and the Corefile and .db file for CoreDNS. 
+# Or just create your own .env and add your own coreDNS files to the ./Mountpoints/coredns folder.
+version: '2'
+services:
+  dns: 
+    image: coredns/coredns
+    ports:
+        - 53:53/udp
+        - 5353:5353
+        - 5392:9253
+    volumes:
+      - ./MountPoints/coredns:/root
+    command: -conf /root/Corefile
+    env_file: .env
+    # This image is built from Scratch, and there is no shell/curl
+    # healthcheck:
+    #   test: curl --fail http://dns:5353/health || exit 1
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 5s
+  grafana:
+    image: grafana/grafana:7.1.5
+    ports:
+      - '5330:3000'
+    depends_on:
+      - dns
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - grafana_plugins:/var/lib/grafana/plugins
+      - ./MountPoints/grafana/provisioning:/etc/grafana/provisioning
+      - ./MountPoints/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - grafana_home:/usr/share/grafana
+      - grafana_logs:/var/log/grafana
+    env_file: .env
+  prometheus:
+    depends_on:
+      - grafana
+    ports:
+      - '5390:9090'
+    image: prom/prometheus
+    volumes:
+     - ./MountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    env_file: .env
+volumes:
+  grafana_data:
+  grafana_plugins:
+  grafana_home:
+  grafana_logs:
