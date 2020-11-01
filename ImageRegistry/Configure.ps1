@@ -1,7 +1,18 @@
 #Requires -Version 7.0
 # Generates a .env file for the containers, and a Corefile and db file for CoreDNS. It loads a config/config.json file to get the records that you have setup. 
-$RESTART_POLICY = 'always'
+param($RESTART_POLICY = 'always'
+)
 
+# Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
+If (-not (Test-Path ./mountPoints/ca/docker.crt)){
+    Write-Error "Could not find a certificate signing cert at: ./mountPoints/ca/docker.crt" -ErrorAction Stop
+}
+If (-not (Test-Path ./mountPoints/ca/docker.key)){
+    Write-Error "Could not find a certificate signing key at: ./mountPoints/ca/docker.key" -ErrorAction Stop
+}
+If (-not (Test-Path ./mountPoints/ca/ca-bundle.crt)){
+    Write-Error "Could not find a ca bundle at: ./mountPoints/ca/ca-bundle.crt" -ErrorAction Stop
+}
 # Create Secure Passwords in the config
 function generatePassword() {
     
@@ -50,6 +61,10 @@ $config = Get-Content ./config/config.json | convertfrom-json
 $mountPointPath = "./Mountpoints/coredns"
 
 Remove-Item -Path $mountPointPath/Corefile -Force -errorAction Ignore 
+
+if (-not (Test-Path "$mountPointPath/Corefile")){
+    New-Item "$mountPointPath/Corefile" -type File -Force -ErrorAction Stop
+}
 ".:53 {
     forward $($config.forward -join " " )
     log

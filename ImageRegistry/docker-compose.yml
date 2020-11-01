@@ -4,7 +4,7 @@
 ## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY", "localhost:5000", "Process")
 ## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "basicAuth", "Process")
 ## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "basicAuth", "Process")
-## [Environment]::SetEnvironmentVariable("RESTART_POLICY", "always", "Process")
+## [Environment]::SetEnvironmentVariable("RESTART_POLICY", "always", "Process") # no, on-failure, always,unless-stopped
 ##
 ## Check the values with:
 ## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY", "Process")
@@ -167,6 +167,7 @@ services:
       - grafana_dns_home:/usr/share/grafana
       - grafana_dns_logs:/var/log/grafana
     env_file: .env
+    restart: ${RESTART_POLICY}
   prometheus_dns:
     depends_on:
       - grafana
@@ -176,6 +177,7 @@ services:
     volumes:
      - ./MountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     env_file: .env
+    restart: ${RESTART_POLICY}
 volumes:
   registry_data:
   registry_certs:
