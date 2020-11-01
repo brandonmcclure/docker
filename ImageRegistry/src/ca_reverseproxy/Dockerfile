@@ -1,15 +1,5 @@
 FROM nginx:1.19.3-alpine
 
-ARG basicAuthUsername
-ARG basicAuthPassword
-ENV AuthUsername=$basicAuthUsername
-ENV AuthPassword=$basicAuthPassword
-
-ARG ForwardPort=8888
-ARG ForwardHost
-ENV FORWARD_PORT=$ForwardPort \
-    FORWARD_HOST=$ForwardHost
-
 # Install Powershell Core
 RUN apk add --no-cache \
     ca-certificates \
@@ -36,8 +26,25 @@ RUN apk add --no-cache \
 RUN apk add --no-cache \
     openssl \
     gettext
+
+ARG basicAuthUsername
+ARG basicAuthPassword
+ENV AuthUsername=$basicAuthUsername
+ENV AuthPassword=$basicAuthPassword
+
+ARG ForwardPort=8888
+ARG ForwardHost
+ENV FORWARD_PORT=$ForwardPort \
+    FORWARD_HOST=$ForwardHost
+
+ARG httpPort=80
+ARG httpsPort=443
+ENV HTTP_PORT=$httpPort \
+HTTPS_PORT=$httpsPort
+
 RUN mkdir /auth \
 && printf "$AuthUsername:$(openssl passwd -crypt $AuthPassword)\n" >> /opt/auth.htpasswd  
+
 WORKDIR /opt
 
 COPY auth.conf launch.sh ./

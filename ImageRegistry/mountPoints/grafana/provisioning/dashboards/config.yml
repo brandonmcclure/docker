@@ -1,13 +1,11 @@
 apiVersion: 1
 
 providers:
-# - name: dashboards
-#   type: file
-#   updateIntervalSeconds: 30
-#   options:
-#     path: /etc/grafana/provisioning/dashboards/coredns_rev1.json
-#     foldersFromFilesStructure: true
-  - name: 'Default'
-    folder: 'CoreDNS'
+  - name: 'Prometheus'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    editable: true
     options:
       path: /etc/grafana/provisioning/dashboards
