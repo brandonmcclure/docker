@@ -53,11 +53,11 @@ services:
     build: ./src/ca
     restart: ${RESTART_POLICY}
     volumes:
-      - registry_certs:/certs
-      - type: bind
-        source: ./mountPoints/ca
-        target: /ca
-    entrypoint: ["pwsh", "New-CFSSL_Certificate.ps1"]
+      - registry_certs:/mnt/registry_certs
+      - grafana_certs:/mnt/grafana_certs
+    # Tried real hard to run this script with parameters, specifically the array of PSObjects. I could shell in and run the command below just fine, but could not get it in a place for the entrypoint
+    # pwsh -command "& /work/New-CFSSL_Certificate.ps1 -certRequests ([PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')},[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')})"
+    entrypoint: ["pwsh", "/work/New-CFSSL_Certificate.ps1"]
     healthcheck:
       test: ["CMD", "pwsh", "-c", "Test-Path", "/certs/cert.crt"]
       interval: 1m
@@ -114,28 +114,6 @@ services:
       - "8000:8000"
     links:
       - registry:registry
-  grafana:
-    build: src/grafana
-    ports:
-      - '3000:3000'
-    depends_on:
-      - registry
-    restart: ${RESTART_POLICY}
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - grafana_plugins:/var/lib/grafana/plugins
-      - grafana_provisiong:/etc/grafana/provisioning
-      - grafana_home:/usr/share/grafana
-      - grafana_logs:/var/log/grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD:"admin"
-  prometheus:
-    depends_on:
-      - registry
-    ports:
-      - '9090:9090'
-    build: src/prometheus/
-    restart: ${RESTART_POLICY}
   dns: 
     image: coredns/coredns
     ports:
@@ -146,33 +124,29 @@ services:
       - ./MountPoints/coredns:/root
     command: -conf /root/Corefile
     env_file: .env
-    # This image is built from Scratch, and there is no shell/curl
-    # healthcheck:
-    #   test: curl --fail http://dns:5353/health || exit 1
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 3
-    #   start_period: 5s
-  grafana_dns:
+    restart: ${RESTART_POLICY}
+  grafana:
     image: grafana/grafana:7.1.5
     ports:
-      - '5330:3000'
+      - '3000:3000'
     depends_on:
       - dns
+      - registry
     volumes:
-      - grafana_dns_data:/var/lib/grafana
-      - grafana_dns_plugins:/var/lib/grafana/plugins
+      - grafana_data:/var/lib/grafana
+      - grafana_plugins:/var/lib/grafana/plugins
       - ./MountPoints/grafana/provisioning:/etc/grafana/provisioning
       - ./MountPoints/grafana/grafana.ini:/etc/grafana/grafana.ini
-      - grafana_dns_home:/usr/share/grafana
-      - grafana_dns_logs:/var/log/grafana
+      - grafana_home:/usr/share/grafana
+      - grafana_logs:/var/log/grafana
+      - grafana_certs:/mnt/certs
     env_file: .env
     restart: ${RESTART_POLICY}
-  prometheus_dns:
+  prometheus:
     depends_on:
       - grafana
     ports:
-      - '5390:9090'
+      - '9090:9090'
     image: prom/prometheus
     volumes:
      - ./MountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
@@ -188,7 +162,4 @@ volumes:
   grafana_provisiong:
   grafana_home:
   grafana_logs:
-  grafana_dns_data:
-  grafana_dns_plugins:
-  grafana_dns_home:
-  grafana_dns_logs:
+  grafana_certs:

@@ -1,7 +1,7 @@
 {
   "__inputs": [
     {
-      "name": "DS_DS_PROMETHEUS",
+      "name": "DS_PROMETHEUS",
       "label": "DS_PROMETHEUS",
       "description": "",
       "type": "datasource",
@@ -83,7 +83,7 @@
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "start time of the process",
       "format": "dateTimeFromNow",
       "gauge": {
@@ -165,7 +165,7 @@
         "#967302",
         "#967302"
       ],
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "The number of cache request received",
       "format": "short",
       "gauge": {
@@ -247,7 +247,7 @@
         "#1f78c1",
         "#1f78c1"
       ],
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "The number of cache request received (hits)",
       "format": "short",
       "gauge": {
@@ -329,7 +329,7 @@
         "#890f02",
         "#890f02"
       ],
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "The number of cache request received (miss)",
       "format": "short",
       "gauge": {
@@ -411,7 +411,7 @@
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "Process Resident Memory Usage",
       "format": "decbytes",
       "gauge": {
@@ -489,7 +489,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "Average user and system CPU time spent in seconds.",
       "fill": 1,
       "gridPos": {
@@ -575,7 +575,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "Virtual and Resident memory size in bytes, averages over 5 min interval",
       "fill": 1,
       "gridPos": {
@@ -669,7 +669,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "Number of open file descriptors",
       "fill": 1,
       "gridPos": {
@@ -769,7 +769,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "The HTTP requests",
       "fill": 1,
       "gridPos": {
@@ -855,7 +855,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "The in-flight HTTP requests",
       "fill": 1,
       "gridPos": {
@@ -941,7 +941,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "description": "The rate of registry cache requests",
       "fill": 1,
       "gridPos": {
@@ -1027,7 +1027,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "fill": 1,
       "gridPos": {
         "h": 7,
@@ -1124,7 +1124,7 @@
         "mode": "spectrum"
       },
       "dataFormat": "timeseries",
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "gridPos": {
         "h": 7,
         "w": 8,
@@ -1183,7 +1183,7 @@
         "mode": "spectrum"
       },
       "dataFormat": "timeseries",
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "gridPos": {
         "h": 7,
         "w": 8,
@@ -1242,7 +1242,7 @@
         "mode": "spectrum"
       },
       "dataFormat": "timeseries",
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "gridPos": {
         "h": 7,
         "w": 8,
@@ -1301,7 +1301,7 @@
         "mode": "spectrum"
       },
       "dataFormat": "timeseries",
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "gridPos": {
         "h": 7,
         "w": 8,
@@ -1360,7 +1360,7 @@
         "mode": "spectrum"
       },
       "dataFormat": "timeseries",
-      "datasource": "${DS_DS_PROMETHEUS}",
+      "datasource": "DS_PROMETHEUS",
       "gridPos": {
         "h": 7,
         "w": 8,
@@ -1420,7 +1420,7 @@
       {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_DS_PROMETHEUS}",
+        "datasource": "DS_PROMETHEUS",
         "hide": 0,
         "includeAll": false,
         "label": null,
@@ -1440,7 +1440,7 @@
       {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_DS_PROMETHEUS}",
+        "datasource": "DS_PROMETHEUS",
         "hide": 0,
         "includeAll": false,
         "label": null,
@@ -1460,7 +1460,7 @@
       {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_DS_PROMETHEUS}",
+        "datasource": "DS_PROMETHEUS",
         "hide": 0,
         "includeAll": false,
         "label": null,

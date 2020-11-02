@@ -1,31 +1,51 @@
 # Synopsis
-We need a repository of images that we will build/deploy to as well as pull from.
+This started as me setting up a docker registry. It has morphed to include a CA and DNS services. 
 
-[Docker docs](<https://docs.docker.com/registry/>)
+This is used for my learning and should not be used by anyone for anything "production" related. Feel free to PR or raise issues if you have any problems though, as I am interested in learning what works and what does not.
 
-This is designed to run with `docker-compose up -d --build` It will run a container for cfssl to run as a intermediate CA, and then the registry app will get a certificate from this container. It also has a UI, grafana and prometheus attached to it as well. 
+# More detailed description
 
+# How to run
+## CA/CFSSL
 This expects a CA certificate (`docker.crt`) and key (`docker.key`) for signing, and a `ca-bundle.crt` bundle/chain of the signing cert/up to the root CA located at `/mountpoints/ca`
-# Volume backups
-There are 2 powershell scripts to help with the backup and restore of the registry volume. 
 
-# Operations
+This can self signed by you using openssl, or you can bring your own from a CA/intermeadiate CA. I used an intermeadiate CA that I generated from my Truenas box. My thinking is that this will give me the best client certs because I have the root and int CA trusted on my computers, and if I mess up and need to revoke the intermediate CA that is used for signing my docker certs then I can without messing up the rest of my PKI for my physical machines/freebsd jails.
+
+## CoreDNS
+Create a `config/config.json` file that looks something like:
+```
+{
+    "domain":"yourDomain.com",
+    "forward":[".","8.8.8.8","9.9.9.9"],
+    "Records":[
+        {"Name":"yourDomain.com.","ZoneClass":"IN","RecordType":"SOA","MNAME":"dns.yourDomain.com.","RNAME":"theadminemail.yourDomain.com","SERIAL":"2015082541","REFRESH":"7200","RETRY":"3600","EXPIRE":"1209600","TTL":"3600"},
+        {"Name":"dns.yourDomain.com.","ZoneClass":"IN","RecordType":"A","IpAddress":"10.0.0.2"},
+        {"Name":"ca.yourDomain.com.","ZoneClass":"IN","RecordType":"A","IpAddress":"10.0.0.2"},
+        {"Name":"gateway.yourDomain.com.","ZoneClass":"IN","RecordType":"A","IpAddress":"10.0.0.1"},
+    ]
+}
+```
+Make sure you update the `forward` section with your dns servers. I included the google dns servers as defaults. Then run `Configure.ps1`. This will take this JSON and build out a .db and Corefile for coredns, and a .env file. 
+
+Right now the .env file really only has 1 env variable that is useful, and that is the Grafana admin password. The `Configure.ps1` script will generate a random password for this. 
+
+## Operation
+This is designed to run with `docker-compose up -d --build` There are 2 env variables that must be set on the machine running this:
+```
+[Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "basicAuth", "Process")
+[Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "basicAuth", "Process")
+```
+
 See the registry in a web browser: <https://localhost:5000/v2/_catalog>
 
 The registry ui at: http://localhost:8000/
 
-Grafana at: http://localhost:3000
+Grafana at: https://localhost:3000
 
 and prometheus at: http://localhost:9090/graph
 
-Checkout the [Docker Registry api docs](<https://docs.docker.com/registry/spec/api/>)
-
-Can make it surfaced to others by setting the insecure-registries in the client machine's docker dameon [config file](<https://docs.docker.com/engine/reference/commandline/dockerd/>)
-```
-"insecure-registries": [
-"hostIPAddress:5000"   
-]
-```
+## Volume backups
+There are 2 powershell scripts to help with the backup and restore of the registry volume. These will stop the registry container, tar the volume with the registry data, then write the tar.gz to a bind point local to this docker-compose and copy it to a network location. The restore will pull the most recent from the network location and un tar into the volume.  
 
 
 ## to push and image to our registry

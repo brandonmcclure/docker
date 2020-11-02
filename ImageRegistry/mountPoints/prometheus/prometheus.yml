@@ -8,3 +8,16 @@
       metrics_path: /metrics
       static_configs: 
         - targets: [ 'dns.mcd.com:5392' ]
+    - job_name: prometheus
+      static_configs: 
+        - targets: 
+            - "dns.mcd.com:9090"    
+    - job_name: registry
+      metrics_path: /metrics
+      static_configs:
+        - targets: [dns.mcd.com:5001]
+    - job_name: 'docker-workers'
+      scrape_interval: 15s
+      metrics_path: /metrics
+      static_configs:
+        - targets: [dns.mcd.com:50501]
