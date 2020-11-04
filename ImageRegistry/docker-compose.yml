@@ -4,6 +4,8 @@
 ## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY", "localhost:5000", "Process")
 ## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "basicAuth", "Process")
 ## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "basicAuth", "Process")
+## [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHUSER", "basicAuth", "Process")
+## [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHPASSWORD", "basicAuth", "Process")
 ## [Environment]::SetEnvironmentVariable("RESTART_POLICY", "always", "Process") # no, on-failure, always,unless-stopped
 ##
 ## Check the values with:
@@ -40,13 +42,15 @@ services:
       context: src/ca_reverseproxy
       dockerfile: Dockerfile
       args:
-        - "basicAuthUsername=${DOCKER_REGISTRY_AUTHUSER}"
-        - "basicAuthPassword=${DOCKER_REGISTRY_AUTHPASSWORD}"
+        - "basicAuthUsername=${DOCKER_CA_AUTHUSER}"
+        - "basicAuthPassword=${DOCKER_CA_AUTHPASSWORD}"
         - "ForwardPort=8888"
         - "ForwardHost=ca"
     ports:
-      - 80:80
-      - 443:443
+      - 8080:80
+      - 8043:443
+    volumes: 
+      - ca_reverseproxy_certs:/etc/nginx/conf.d
   certgetter:
     depends_on:
       - ca
@@ -55,6 +59,8 @@ services:
     volumes:
       - registry_certs:/mnt/registry_certs
       - grafana_certs:/mnt/grafana_certs
+      - ca_reverseproxy_certs:/mnt/ca_reverseproxy_certs
+      - registryui_reverseproxy_certs:/mnt/registryui_reverseproxy_certs
     # Tried real hard to run this script with parameters, specifically the array of PSObjects. I could shell in and run the command below just fine, but could not get it in a place for the entrypoint
     # pwsh -command "& /work/New-CFSSL_Certificate.ps1 -certRequests ([PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')},[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')})"
     entrypoint: ["pwsh", "/work/New-CFSSL_Certificate.ps1"]
@@ -103,17 +109,33 @@ services:
       - registry_data:/backup/registry_data:ro    # Mount the registry data volume (as read-only)
       - ./backups/registry:/archive                      # Mount a local folder as the backup archive
   registryui:
-    hostname: registry
+    hostname: registryui
     depends_on:
       - registry
     build:
       context: src/registryui
       dockerfile: Dockerfile
     restart: ${RESTART_POLICY}
-    ports:
-      - "8000:8000"
     links:
       - registry:registry
+    volumes:
+      - ./mountPoints/registryUI/config.yml:/opt/config.yml
+  registryui_reverseproxy:
+    depends_on: 
+      - certgetter
+      - registryui
+    restart: ${RESTART_POLICY}
+    build:
+      context: src/ca_reverseproxy
+      dockerfile: Dockerfile
+      args:
+        - "ForwardPort=8000"
+        - "ForwardHost=registryui"
+    ports:
+      - 5080:80
+      - 5043:443
+    volumes: 
+      - registryui_reverseproxy_certs:/etc/nginx/conf.d
   dns: 
     image: coredns/coredns
     ports:
@@ -163,3 +185,5 @@ volumes:
   grafana_home:
   grafana_logs:
   grafana_certs:
+  ca_reverseproxy_certs:
+  registryui_reverseproxy_certs:
