@@ -55,6 +55,7 @@ services:
     volumes:
       - registry_certs:/mnt/registry_certs
       - grafana_certs:/mnt/grafana_certs
+      - squid_certs:/mnt/squid_certs
     # Tried real hard to run this script with parameters, specifically the array of PSObjects. I could shell in and run the command below just fine, but could not get it in a place for the entrypoint
     # pwsh -command "& /work/New-CFSSL_Certificate.ps1 -certRequests ([PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')},[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')})"
     entrypoint: ["pwsh", "/work/New-CFSSL_Certificate.ps1"]
@@ -152,6 +153,23 @@ services:
      - ./MountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     env_file: .env
     restart: ${RESTART_POLICY}
+  squidproxy:
+    image: localhost:5000/sameersbn/squid
+    restart: ${RESTART_POLICY}
+    volumes:
+      - squid_cache:/var/spool/squid
+      - squid_log:/var/log/squid
+      - ./MountPoints/squid/squid.conf:/etc/squid/squid.conf
+      - squid_certs:/certs
+    ports:
+      - 3128:3128
+  squidmetrics:
+    image: boynux/squid-exporter
+    environment:
+      SQUID_EXPORTER_LISTEN: ":9301"
+      SQUID_HOSTNAME: "proxy.example.com"
+    ports:
+      - 9301:9301
 volumes:
   registry_data:
   registry_certs:
@@ -163,3 +181,6 @@ volumes:
   grafana_home:
   grafana_logs:
   grafana_certs:
+  squid_cache:
+  squid_log:
+  squid_certs:

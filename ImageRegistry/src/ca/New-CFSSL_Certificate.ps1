@@ -2,6 +2,7 @@ param(
 	$certRequests = @(
 		[PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')}
 		,[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')}
+		,[PSCustomObject]@{name = 'squidwebui'; hosts = @('squidwebui','localhost','127.0.0.1','proxy.example.com')}
 	),
 	$Country = "US",
 	$State = "Colorado",
@@ -30,6 +31,7 @@ Write-Host "Useing the ca url: $caURL"
 Write-Host "Creating certificates for $($certRequests | Measure-Object | Select-Object -ExpandProperty Count) requests"
 foreach ($request in $certRequests){
 	if (-not [bool]($request.PSobject.Properties.name -match "name") -or -not [bool]($request.PSobject.Properties.name -match "hosts")){
+		Write-Host $request
 		Write-Error "request def does not have a name or hosts property. Try again" -ErrorAction Stop
 	}
 	$request 

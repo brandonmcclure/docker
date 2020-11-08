@@ -7,17 +7,21 @@
     - job_name: coredns
       metrics_path: /metrics
       static_configs: 
-        - targets: [ 'dns.mcd.com:5392' ]
+        - targets: [ 'dns.example.com:5392' ]
     - job_name: prometheus
       static_configs: 
         - targets: 
-            - "dns.mcd.com:9090"    
+            - "dns.example.com:9090"    
     - job_name: registry
       metrics_path: /metrics
       static_configs:
-        - targets: [dns.mcd.com:5001]
+        - targets: [dns.example.com:5001]
     - job_name: 'docker-workers'
       scrape_interval: 15s
       metrics_path: /metrics
       static_configs:
-        - targets: [dns.mcd.com:50501]
+        - targets: [dns.example.com:50501]
+    - job_name: 'squid'
+      scrape_interval: 15s
+      static_configs:
+        - targets: [proxy.example.com:9301]
