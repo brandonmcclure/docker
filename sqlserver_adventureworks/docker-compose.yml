@@ -1,0 +1,21 @@
+# Instructions
+#
+# Run the Configure.ps1 script to download the AdventureWorks .bak files, then run (from this (directory): docker-compose down -v; docker-compose up -d --build
+# [Environment]::SetEnvironmentVariable("CD_SA_PASSWORD", "d0ckerSA", "Process") 
+
+  version: '3.5'
+
+  services:
+    db:
+      build: 
+        context: .
+        dockerfile: Dockerfile
+        args: 
+          CD_SA_PASSWORD: "d0ckerSA"
+          IMAGE: "mcr.microsoft.com/mssql/server:2019-latest"
+      ports:
+        - "1433:1433"
+      volumes:
+        - sql_data:/var/opt/mssql/dbfiles
+  volumes:
+    sql_data:
