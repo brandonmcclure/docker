@@ -1,19 +1,7 @@
-#
-# Recommended minimum configuration:
-#
-
-# Example rule allowing access from your local networks.
-# Adapt to list your (internal) IP networks from where browsing
-# should be allowed
-acl localnet src 0.0.0.1-0.255.255.255	# RFC 1122 "this" network (LAN)
-acl localnet src 10.0.0.0/8		# RFC 1918 local private network (LAN)
-acl localnet src 100.64.0.0/10		# RFC 6598 shared address space (CGN)
-acl localnet src 169.254.0.0/16 	# RFC 3927 link-local (directly plugged) machines
-acl localnet src 172.16.0.0/12		# RFC 1918 local private network (LAN)
-acl localnet src 192.168.0.0/16		# RFC 1918 local private network (LAN)
-acl localnet src fc00::/7       	# RFC 4193 local private network range
-acl localnet src fe80::/10      	# RFC 4291 link-local (directly plugged) machines
-
+#############
+# http_access
+#  http://www.squid-cache.org/Versions/v4/cfgman/http_access.html
+#  Allowing or Denying access based on defined access lists
 acl SSL_ports port 443
 acl Safe_ports port 80		# http
 acl Safe_ports port 21		# ftp
@@ -27,50 +15,121 @@ acl Safe_ports port 591		# filemaker
 acl Safe_ports port 777		# multiling http
 acl CONNECT method CONNECT
 
-#
-# Recommended minimum Access Permission configuration:
-#
-# Deny requests to certain unsafe ports
 http_access deny !Safe_ports
-
-# Deny CONNECT to other than secure SSL ports
 http_access deny CONNECT !SSL_ports
-
-# Only allow cachemgr access from localhost
-http_access allow localhost manager
+http_access allow localnet manager
 http_access deny manager
-
-# We strongly recommend the following be uncommented to protect innocent
-# web applications running on the proxy server who think the only
-# one who can access services on "localhost" is a local user
-#http_access deny to_localhost
-
-#
-# INSERT YOUR OWN RULE(S) HERE TO ALLOW ACCESS FROM YOUR CLIENTS
-#
-
-# Example rule allowing access from your local networks.
-# Adapt localnet in the ACL section to list your (internal) IP networks
-# from where browsing should be allowed
 http_access allow localnet
 http_access allow localhost
-
-# And finally deny all other access to this proxy
 http_access deny all
 
-# Squid normally listens to port 3128
-http_port 3128
+###########
+# http_port
+#  http://www.squid-cache.org/Versions/v4/cfgman/http_port.html
+#  The socket addresses where Squid will listen for HTTP client requests (proxy port)
+#  - mode: ssl-bump
+#     For each CONNECT request allowed by ssl_bump ACLs, establish secure connection with the client and with
+#     the server, decrypt HTTPS messages as they pass through Squid, and treat them as unencrypted HTTP messages,
+#     becoming the man-in-the-middle.
+#  - SSL Bump Mode Option: generate-host-certificates, dynamic_cert_mem_cache_size
+#      - Dynamically create SSL server certificates for the destination hosts of bumped CONNECT requests
+#      - Approximate total RAM size spent on cached generated certificates
+#  - cert: Path to file containing the X.509 certificate (PEM format) and provate key to be used in the TLS handshake ServerHello
+#      Generate (cert+key):
+#       $ openssl req -new -newkey rsa:4096 -sha256 -days 3650 -nodes -x509 -keyout myca.pem -out myca.pem
+#      and import myca.pem into your browser (certificates -> autorities)
+http_port 3128 \
+  ssl-bump \
+  generate-host-certificates=on \
+  dynamic_cert_mem_cache_size=4MB \
+  cert=/opt/conf/certs/CyberSaiyan-mitm.pem
 
-# Uncomment and adjust the following to add a disk cache directory.
-#cache_dir ufs /var/cache/squid 100 16 256
+#####################
+# sslproxy_cert_error
+#  Bypass server certificate validation errors for destination (ips, domains and submnets)
+#  http://www.squid-cache.org/Versions/v4/cfgman/sslproxy_cert_error.html
+sslproxy_cert_error allow ssl_error_domains
+sslproxy_cert_error allow ssl_error_ips
 
-# Leave coredumps in the first cache dir
-coredump_dir /var/cache/squid
+##########
+# ssl_bump
+#  http://www.squid-cache.org/Versions/v4/cfgman/ssl_bump.html
+#  Consulted when a CONNECT request is received on an http_port
+#  The subsequent data on the connection is either treated as HTTPS and decrypted OR tunneled at TCP level without decryption,
+#  depending on the first matching bumping "action":
+#  - splice: become a TCP tunnel without decrypting proxied traffic
+#  - peek: receive client or server certificate while preserving the possibility of splicing the connection
+#  - bump: establishes a secure connection with the client and server
 
-#
-# Add any of your own refresh_pattern entries above these.
-#
-refresh_pattern ^ftp:		1440	20%	10080
-refresh_pattern ^gopher:	1440	0%	1440
-refresh_pattern -i (/cgi-bin/|\?) 0	0%	0
-refresh_pattern .		0	20%	4320
+# just tunnel (no decryption) on SSL request header match
+ssl_bump splice localhost
+ssl_bump splice ssl_skip_bump
+# peek on SslBump1 step
+ssl_bump peek step1 all
+# force bump (decryption) on SSL request header match
+ssl_bump bump ssl_force_bump
+# just tunnel (no decryption) based on whitelisting (domains, ips, src/dest, user-agent)
+ssl_bump splice ssl_exclude_domains
+ssl_bump splice ssl_exclude_ips
+ssl_bump splice ssl_exclude_useraddr
+ssl_bump splice ssl_exclude_useragent
+# To disable decryption (bump) uncomment line "ssl_bump splice all" and comment "sspl_bump bump all"
+#ssl_bump splice all
+ssl_bump bump all
+
+#################
+# sslcrtd_program
+#  http://www.squid-cache.org/Versions/v4/cfgman/sslcrtd_program.html
+#  certificate generator executable
+sslcrtd_program /usr/lib/squid/security_file_certgen -s /var/spool/squid_ssldb -M 4MB
+
+#######
+# cache
+#  http://www.squid-cache.org/Versions/v4/cfgman/cache.html
+#  Requests denied by this directive will not be served from the cache and their responses will not be stored in the cache
+cache deny cache_exclude_domainname
+cache deny cache_exclude_domainaddr
+cache deny cache_exclude_useraddr
+cache deny cache_exclude_useragent
+
+##########
+# send_hit
+#  http://www.squid-cache.org/Versions/v4/cfgman/send_hit.html
+#  Responses denied by this directive will not be served from the cache (but may still be cached, see store_miss)
+send_hit deny cache_exclude_contenttype
+
+############
+# store_miss
+#  http://www.squid-cache.org/Versions/v4/cfgman/store_miss.html
+#  Responses denied by this directive will not be cached (but may still be served from the cache, see send_hit)
+store_miss deny cache_exclude_contenttype
+
+#################
+# refresh_pattern
+#  http://www.squid-cache.org/Versions/v4/cfgman/refresh_pattern.html
+#  Regexp based expiration rules
+refresh_pattern ^ftp:       1440    20% 10080
+refresh_pattern ^gopher:    1440    0%  1440
+refresh_pattern -i (/cgi-bin/|\?) 0 0%  0
+refresh_pattern .       0   20% 4320
+
+###################
+# shutdown_lifetime
+#  http://www.squid-cache.org/Versions/v4/cfgman/shutdown_lifetime.html
+#  Any active clients after this many seconds will receive a 'timeout' message.
+shutdown_lifetime 10 seconds
+
+###########
+# logformat
+#  http://www.squid-cache.org/Versions/v4/cfgman/logformat.html
+logformat squid-cs %{%Y-%m-%d %H:%M:%S}tl %3tr %>a %Ss/%03>Hs %<st %rm %>ru %un %Sh/%<a %mt "%{User-Agent}>h" "SQUID-CS" %>st %note
+access_log /var/log/squid/access.log squid-cs
+
+##################
+# various config options
+#  http://www.squid-cache.org/Versions/v4/cfgman/visible_hostname.html
+#  http://www.squid-cache.org/Versions/v4/cfgman/dns_v4_first.html
+#  http://www.squid-cache.org/Versions/v4/cfgman/forwarded_for.html
+visible_hostname proxy.example.com
+dns_v4_first on
+forwarded_for on

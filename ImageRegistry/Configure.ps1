@@ -1,6 +1,7 @@
 #Requires -Version 7.0
 # Generates a .env file for the containers, and a Corefile and db file for CoreDNS. It loads a config/config.json file to get the records that you have setup. 
 param($RESTART_POLICY = 'always'
+,$SQUID_HOSTNAME = ''
 )
 
 # Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
@@ -50,6 +51,12 @@ PROCESS {
 }
 }
 
+Remove-Item .env -Force -errorAction Ignore
+"visible_hostname proxy.$GF_SECURITY_ADMIN_PASSWORD )
+RESTART_POLICY=$RESTART_POLICY"`
+| Add-Content -Path .env
+
+Write-Host "configure"
 Remove-Item .env -Force -errorAction Ignore
 "GF_SECURITY_ADMIN_PASSWORD=$(ConvertFrom-SecureString $GF_SECURITY_ADMIN_PASSWORD -AsPlainText  )
 RESTART_POLICY=$RESTART_POLICY"`

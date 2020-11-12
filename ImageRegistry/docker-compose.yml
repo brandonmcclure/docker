@@ -4,7 +4,8 @@
 ## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY", "localhost:5000", "Process")
 ## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "basicAuth", "Process")
 ## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "basicAuth", "Process")
-## [Environment]::SetEnvironmentVariable("RESTART_POLICY", "always", "Process") # no, on-failure, always,unless-stopped
+## [Environment]::SetEnvironmentVariable("RESTART_POLICY", "unless-stopped", "Process") # no, on-failure, always,unless-stopped
+## [Environment]::SetEnvironmentVariable("HTTP_PROXY", "", "Process")
 ##
 ## Check the values with:
 ## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY", "Process")
@@ -99,6 +100,7 @@ services:
     restart: ${RESTART_POLICY}
     environment:
       BACKUP_CRON_EXPRESSION: "0 20 * * *"
+      HTTP_PROXY: $HTTP_PROXY
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro # Allow use of the "stop-during-backup" feature
       - registry_data:/backup/registry_data:ro    # Mount the registry data volume (as read-only)
@@ -154,15 +156,18 @@ services:
     env_file: .env
     restart: ${RESTART_POLICY}
   squidproxy:
-    image: localhost:5000/sameersbn/squid
+    image: localhost:5000/sameersbn/squid # https://github.com/brandonmcclure/docker-squid?organization=brandonmcclure&organization=brandonmcclure
     restart: ${RESTART_POLICY}
     volumes:
       - squid_cache:/var/spool/squid
       - squid_log:/var/log/squid
-      - ./MountPoints/squid/squid.conf:/etc/squid/squid.conf
-      - squid_certs:/certs
+      - ./MountPoints/squid:/etc/squid
+      - squid_certs:/opt/conf/certs/
     ports:
       - 3128:3128
+      - 3180:80
+    #entrypoint: tail -f /dev/null
+    #command: /usr/sbin/squid -k check
   squidmetrics:
     image: boynux/squid-exporter
     environment:
