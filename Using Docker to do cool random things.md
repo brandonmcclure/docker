@@ -27,3 +27,9 @@ Then run the container in the directory with you docker-compose file and pass in
 ```
 docker run --rm -it -v ${pwd}:/data cytopia/yamllint Docker-compose.yml -c docker-compose.yamllint.config.yaml
 ```
+
+# Certificates and stuff
+Stand up CFSSL to do a SSL scan
+```
+docker run -p 8888:8888 cfssl/cfssl serve -address 127.0.0.1
+```
