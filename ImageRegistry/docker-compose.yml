@@ -48,8 +48,10 @@ services:
         - "ForwardPort=8888"
         - "ForwardHost=ca"
     ports:
-      - 2080:80
-      - 2043:443
+      - 80:80
+      - 443:443
+    volumes:
+      - ca_reverseproxy_certs:/etc/nginx/conf.d
   certgetter:
     depends_on:
       - ca
@@ -133,8 +135,8 @@ services:
         - "ForwardPort=8000"
         - "ForwardHost=registryui"
     ports:
-      - 5080:80
-      - 5043:443
+      - 5081:80
+      - 5044:443
     volumes: 
       - registryui_reverseproxy_certs:/etc/nginx/conf.d
   dns: 
@@ -186,6 +188,7 @@ services:
     ports:
       - 3128:3128
       - 3180:80
+    #entrypoint: tail -f /dev/null
   squidmetrics:
     image: boynux/squid-exporter
     environment:

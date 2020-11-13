@@ -42,12 +42,15 @@ ARG httpsPort=443
 ENV HTTP_PORT=$httpPort \
 HTTPS_PORT=$httpsPort
 
-RUN mkdir /auth \
-&& printf "$AuthUsername:$(openssl passwd -crypt $AuthPassword)\n" >> /opt/auth.htpasswd  
-
 WORKDIR /opt
 
 COPY auth.conf launch.sh ./
-COPY New-CFSSL_Certificate.ps1 /work/New-CFSSL_Certificate.ps1
+
+# If we build the iamge with a AuthUsername argument/env variable then create the htpasswd file and update the auth.conf file to let nginx know to use basic auth
+RUN mkdir /auth \
+&& if [ ! -z "${AuthUsername}" ]; then printf "$AuthUsername:$(openssl passwd -crypt $AuthPassword)\n" >> /opt/auth.htpasswd; sed -i $'s/location \/ {/location \/ {\\\n auth_basic\\n"Restricted"; \\\nauth_basic_user_file    auth.htpasswd;/' /opt/auth.conf; fi
+
+
+
 #ENTRYPOINT tail -f /dev/null
 CMD ["./launch.sh"]

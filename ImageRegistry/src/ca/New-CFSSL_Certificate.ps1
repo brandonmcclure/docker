@@ -4,6 +4,8 @@ param(
 		[PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry')}
 		,[PSCustomObject]@{name = 'grafana'; hosts = @('registry','proxy')}
 		,[PSCustomObject]@{name = 'squid'; hosts = @('proxy'); uid = '200'; gid = '200'}
+		,[PSCustomObject]@{name = 'registryui_reverseproxy'; hosts = @('ImageRegistry','registry');}
+		,[PSCustomObject]@{name = 'ca_reverseproxy'; hosts = @('ca');}
 	),
 	$Country = "US",
 	$State = "Colorado",
@@ -19,6 +21,9 @@ foreach($certRequestIndex in 0..$(($certRequests | measure-object | select -Expa
 	$newRequest = $certRequests[$certRequestIndex]
 	$hosts = @()
 	$hosts += $newRequest.name
+	if(	 -not [string]::IsNullOrEmpty($domainName)){
+		$hosts +="$($newRequest.name)$domainName"
+	}
 	foreach($certRequestIndex_HostIndex in 0..$(($newRequest.hosts | measure-object | select -ExpandProperty Count)-1)){
 		if(	 -not [string]::IsNullOrEmpty($domainName)){
 			$hosts +="$($($certRequests[$certRequestIndex].hosts[$certRequestIndex_HostIndex]))$domainName"
@@ -68,7 +73,9 @@ foreach ($request in $certRequests){
 					"L": "'+$Location+'"
 				}
 			],
-			"CN": "'+$request.name+'"
+			"CN": "'+$(if(	 -not [string]::IsNullOrEmpty($domainName)){
+				$hosts +="$($request.name)$domainName"
+			}else{$request.name})+'"
 		}
 	}'
 
