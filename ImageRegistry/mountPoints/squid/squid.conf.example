@@ -1,23 +1,52 @@
+#####
+# acl
+#  http://www.squid-cache.org/Versions/v4/cfgman/acl.html
+#  Every access list definition must begin with an aclname and acltype, followed by either type-specific arguments 
+#  or a quoted filename that they are read from
+#   acl <name> <type> <options> <argument|file>
+
+# http_acces acl
+acl localnet src 0.0.0.1-0.255.255.255
+acl SSL_ports port 443 
+acl Safe_ports port 80          # http
+acl Safe_ports port 21          # ftp
+acl Safe_ports port 443         # https
+acl Safe_ports port 70          # gopher
+acl Safe_ports port 210         # wais
+acl Safe_ports port 1025-65535  # unregistered ports
+acl Safe_ports port 280         # http-mgmt
+acl Safe_ports port 488         # gss-http
+acl Safe_ports port 591         # filemaker
+acl Safe_ports port 777         # multiling http
+acl CONNECT method CONNECT
+# sslproxy_cert_error acl
+acl ssl_error_domains dstdomain "/etc/squid/ssl/error/domains.conf"    
+acl ssl_error_ips     dst       "/etc/squid/ssl/error/ips.conf"
+# ssl_bump acl
+acl step1 at_step SslBump1
+acl step2 at_step SslBump2
+acl step3 at_step SslBump3
+acl ssl_skip_bump req_header X-SSL-Bump -i skip
+acl ssl_force_bump req_header X-SSL-Bump -i force
+acl ssl_exclude_domains   ssl::server_name "/etc/squid/ssl/exclude/domains.conf"
+acl ssl_exclude_ips       dst              "/etc/squid/ssl/exclude/ips.conf"            
+acl ssl_exclude_useraddr  src              "/etc/squid/ssl/exclude/useraddr.conf"
+acl ssl_exclude_useragent browser -i       "/etc/squid/ssl/exclude/useragent.conf"    
+# cache acl
+acl cache_exclude_domainaddr dst           "/etc/squid/cache/exclude/domainaddr.conf"    
+acl cache_exclude_domainname dstdomain     "/etc/squid/cache/exclude/domainname.conf"
+acl cache_exclude_useraddr   src           "/etc/squid/cache/exclude/useraddr.conf"    
+acl cache_exclude_useragent  browser -i    "/etc/squid/cache/exclude/useragent.conf"    
+# send_hit acl
+acl cache_exclude_contenttype rep_mime_type "/etc/squid/cache/exclude/contenttype.conf"
+
 #############
 # http_access
 #  http://www.squid-cache.org/Versions/v4/cfgman/http_access.html
 #  Allowing or Denying access based on defined access lists
-acl SSL_ports port 443
-acl Safe_ports port 80		# http
-acl Safe_ports port 21		# ftp
-acl Safe_ports port 443		# https
-acl Safe_ports port 70		# gopher
-acl Safe_ports port 210		# wais
-acl Safe_ports port 1025-65535	# unregistered ports
-acl Safe_ports port 280		# http-mgmt
-acl Safe_ports port 488		# gss-http
-acl Safe_ports port 591		# filemaker
-acl Safe_ports port 777		# multiling http
-acl CONNECT method CONNECT
-
 http_access deny !Safe_ports
 http_access deny CONNECT !SSL_ports
-http_access allow localnet manager
+http_access allow localhost manager
 http_access deny manager
 http_access allow localnet
 http_access allow localhost
@@ -42,7 +71,8 @@ http_port 3128 \
   ssl-bump \
   generate-host-certificates=on \
   dynamic_cert_mem_cache_size=4MB \
-  cert=/opt/conf/certs/CyberSaiyan-mitm.pem
+  cert=/opt/conf/certs/cert.crt \
+  key=/opt/conf/certs/cert.key
 
 #####################
 # sslproxy_cert_error
@@ -81,7 +111,8 @@ ssl_bump bump all
 # sslcrtd_program
 #  http://www.squid-cache.org/Versions/v4/cfgman/sslcrtd_program.html
 #  certificate generator executable
-sslcrtd_program /usr/lib/squid/security_file_certgen -s /var/spool/squid_ssldb -M 4MB
+sslcrtd_program /usr/lib/squid/security_file_certgen -s /var/lib/ssl_db -M 4MB
+sslcrtd_children 3 startup=1 idle=1
 
 #######
 # cache
