@@ -1,7 +1,11 @@
 #Requires -Version 7.0
 # Generates a .env file for the containers, and a Corefile and db file for CoreDNS. It loads a config/config.json file to get the records that you have setup. 
 param($RESTART_POLICY = 'always'
-,$SQUID_HOSTNAME = ''
+,$SQUID_HOSTNAME = '',
+$registryBasicAuthUsername = 'basicAuth',
+$registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
+$REGISTRY_UI_URL = 'https://Registry:5000',
+$REGISTRY_UI_VERIFY_TLS = 'false'
 )
 
 # Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
@@ -50,7 +54,28 @@ PROCESS {
     Write-Output $outVal
 }
 }
+if([string]::IsNullOrEmpty($registryBasicAuthUsername)){
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "Process")
+}
+if([string]::IsNullOrEmpty($registryBasicAuthPassword)){
+    $registryBasicAuthPassword = $(generatePassword)
+    Write-Host "Generated random password for registry basic auth password: $registryBasicAuthPassword"
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "Process")
+}
+else{
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthUsername, "Process")
+}
+$GF_SECURITY_ADMIN_PASSWORD=$(generatePassword)
 
+Write-Host "Setting up the RegistryUI config file"
+Remove-Item -Path ./mountPoints/registryUI/config.yml -ErrorAction Ignore
+$registryUIConfig = Get-Content ./mountPoints/registryUI/config.yml.example
+$registryUIConfig `
+| foreach-object{if (-not [string]::IsNullOrEmpty($registryBasicAuthUsername)){$_ |replaceWith -find "registry_username: basicAuth" -replace "registry_username: $registryBasicAuthUsername"}} `
+| foreach-object{if (-not [string]::IsNullOrEmpty($registryBasicAuthPassword)){$_ | replaceWith -find "registry_password: basicAuth" -replace "registry_password: $(ConvertFrom-SecureString $registryBasicAuthPassword -AsPlainText  )"}} `
+| foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){$_ |replaceWith -find "registry_url: https://Registry:5000" -replace "registry_url: $REGISTRY_UI_URL"}} `
+| foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_VERIFY_TLS)){$_ |replaceWith -find "verify_tls: true" -replace "verify_tls: $REGISTRY_UI_VERIFY_TLS"}} `
+| Add-Content -Path ./mountPoints/registryUI/config.yml -Force
 Remove-Item .env -Force -errorAction Ignore
 "visible_hostname proxy.$GF_SECURITY_ADMIN_PASSWORD )
 RESTART_POLICY=$RESTART_POLICY"`
