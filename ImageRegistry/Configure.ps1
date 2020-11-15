@@ -5,8 +5,13 @@ param($RESTART_POLICY = 'always'
 $registryBasicAuthUsername = 'basicAuth',
 $registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
 $REGISTRY_UI_URL = 'https://Registry:5000',
-$REGISTRY_UI_VERIFY_TLS = 'false'
+$REGISTRY_UI_VERIFY_TLS = 'false',
+$REGISTRY_DELETE_ENABLE = $True
+,$localHostAddress = '192.168.0.2'
+,$domain = '.mcd.com'
 )
+
+Import-Module powershell-yaml
 
 # Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
 If (-not (Test-Path ./mountPoints/ca/docker.crt)){
@@ -67,6 +72,25 @@ else{
 }
 $GF_SECURITY_ADMIN_PASSWORD=$(generatePassword)
 
+Write-Host "Setting up the Registry config file"
+Remove-Item -Path ./mountPoints/registry/config.yml -ErrorAction Ignore
+$registryConfig_yaml = Get-Content ./mountPoints/registry/config.yml.example -Raw
+$config = ConvertFrom-Yaml $registryConfig_yaml
+
+if (-not [string]::IsNullOrEmpty($REGISTRY_DELETE_ENABLE)){
+    $config.Delete.enabled = $REGISTRY_DELETE_ENABLE
+    
+}
+if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){
+    $config.http.host = $REGISTRY_UI_URL
+    
+}
+
+(ConvertTo-Yaml -Data $config) `
+-replace "(version: [0-9]+?\.[0-9]{1}).+","`$1"`
+ | Set-Content -path ./mountPoints/registry/config.yml -Force
+
+
 Write-Host "Setting up the RegistryUI config file"
 Remove-Item -Path ./mountPoints/registryUI/config.yml -ErrorAction Ignore
 $registryUIConfig = Get-Content ./mountPoints/registryUI/config.yml.example
@@ -81,7 +105,7 @@ Remove-Item .env -Force -errorAction Ignore
 RESTART_POLICY=$RESTART_POLICY"`
 | Add-Content -Path .env
 
-Write-Host "configure"
+Write-Host "configure .env file"
 Remove-Item .env -Force -errorAction Ignore
 "GF_SECURITY_ADMIN_PASSWORD=$(ConvertFrom-SecureString $GF_SECURITY_ADMIN_PASSWORD -AsPlainText  )
 RESTART_POLICY=$RESTART_POLICY"`
@@ -117,7 +141,7 @@ $ARecords = $config.Records | where {$_.RecordType -eq "A"}
 $ARecords
 $ARecordString = ""
 foreach ($record in $ARecords){
-    $ARecordString += "$($record.Name) $($record.ZoneClass)  $($record.RecordType) $($record.IpAddress)
+    $ARecordString += "$($record.Name) $($record.ZoneClass)  $($record.RecordType) $(if(-not[string]::IsNullOrEmpty($localHostAddress)){$localHostAddress}else{$record.IpAddress})
 "
 }
 "$($SOARecord.Name) $($SOARecord.ZoneClass)  $($SOARecord.RecordType)   $($SOARecord.MNAME) $($SOARecord.RNAME) $($SOARecord.SERIAL)  $($SOARecord.REFRESH)  $($SOARecord.RETRY)  $($SOARecord.EXPIRE) $($SOARecord.TTL) 

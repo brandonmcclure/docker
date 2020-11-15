@@ -92,6 +92,7 @@ services:
     volumes:
       - registry_data:/var/lib/registry
       - registry_certs:/certs
+      - ./mountPoints/registry/config.yml:/etc/docker/registry/config.yml
       - registry_auth:/auth
     labels:
       # Adding this label means this container should be stopped while it's being backed up:
@@ -133,7 +134,7 @@ services:
       dockerfile: Dockerfile
       args:
         - "ForwardPort=8000"
-        - "ForwardHost=registryui"
+        - "ForwardHost=registry"
     ports:
       - 5081:80
       - 5044:443
@@ -196,6 +197,17 @@ services:
       SQUID_HOSTNAME: "proxy.example.com"
     ports:
       - 9301:9301
+  # dhcp_pxe:
+  #   image: registry.mcd.com:5000/maya2250/docker-pxe
+  #   network_mode: host
+  #   ports:
+  #     - "6953:53"
+  #     - "67:67"
+  #     - "69:69"
+  # dhcp_exporter:
+  #   image: registry.mcd.com:5000/dnsmasq_exporter
+  #   ports:
+  #   - 9153:9153
 volumes:
   registry_data:
   registry_certs:
