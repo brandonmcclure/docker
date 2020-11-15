@@ -3,7 +3,7 @@ param(
 	$certRequests = @(
 		[PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry')}
 		,[PSCustomObject]@{name = 'grafana'; hosts = @('registry','proxy')}
-		,[PSCustomObject]@{name = 'squid'; hosts = @('proxy'); uid = '200'; gid = '200'}
+		,[PSCustomObject]@{name = 'squid'; hosts = @('proxy'); uid = '200'; gid = '200'; signingProfile = "intermediate"}
 		,[PSCustomObject]@{name = 'registryui_reverseproxy'; hosts = @('ImageRegistry','registry');}
 		,[PSCustomObject]@{name = 'ca_reverseproxy'; hosts = @('ca');}
 	),
@@ -18,6 +18,9 @@ param(
 )
 $newRequests =@()
 foreach($certRequestIndex in 0..$(($certRequests | measure-object | select -ExpandProperty Count)-1)){
+	if([string]::IsNullOrEmpty($certRequestIndex.signingProfile)){
+		$signingProfile = "default"
+	}
 	$newRequest = $certRequests[$certRequestIndex]
 	$hosts = @()
 	$hosts += $newRequest.name
@@ -75,7 +78,8 @@ foreach ($request in $certRequests){
 			],
 			"CN": "'+$(if(	 -not [string]::IsNullOrEmpty($domainName)){
 				$hosts +="$($request.name)$domainName"
-			}else{$request.name})+'"
+			}else{$request.name})+'",
+		"profile":"'+$signingProfile+'"
 		}
 	}'
 
