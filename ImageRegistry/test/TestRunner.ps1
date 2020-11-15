@@ -23,7 +23,10 @@
         TestRunner -paths "DataAccess.Tests.ps1" -describesToFilter @("Process-AllTabularModel","Invoke-MockableDateCompare")
    
     #>
-    param([string[]]$paths = @("DNS.Tests.ps1"), [string[]] $describesToFilter = @())
+    param([string[]]$paths = @(
+        "DNS.Tests.ps1",
+        "DHCP.and.TFTP.Tests.ps1"
+        ), [string[]] $describesToFilter = @())
     clear
     Remove-Module Pester -Force -ErrorAction Ignore | Out-Null
     Import-Module Pester -Force

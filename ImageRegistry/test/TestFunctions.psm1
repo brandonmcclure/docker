@@ -209,7 +209,7 @@ function Test-Port{
                                 $udpobject.close()   
                             }                       
                         } Catch { 
-                            If ($Error[0].ToString() -match "\bRespond after a period of time\b") { 
+                            If ($_ -match "\bRespond after a period of time\b") { 
                                 #Close connection  
                                 $udpobject.Close()  
                                 #Make sure that the host is online and not a false positive that it is open 
@@ -234,7 +234,7 @@ function Test-Port{
                                     $temp.Open = "False"  
                                     $temp.Notes = "Unable to verify if port is open or if host is unavailable."                                 
                                 }                         
-                            } ElseIf ($Error[0].ToString() -match "forcibly closed by the remote host" ) { 
+                            } ElseIf ($_ -match "forcibly closed by the remote host" ) { 
                                 #Close connection  
                                 $udpobject.Close()  
                                 Write-Verbose "Connection Timeout"  

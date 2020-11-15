@@ -5,7 +5,7 @@ Describe "DNS Configuration"{
     Context "Input"{
         it 'config file is valid json'{
             $x = Get-Content ../config/config.json -ErrorAction Stop
-            $json = ConvertTo-Json -InputObject $x -Depth 5 -ErrorAction Stop
+            $json = ConvertTo-Json -InputObject $x -Depth 4 -ErrorAction Stop
             
             If ([string]::IsNullOrEmpty($json)){
                 throw "config/config.json is not valid json"

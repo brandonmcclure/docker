@@ -197,17 +197,22 @@ services:
       SQUID_HOSTNAME: "proxy.example.com"
     ports:
       - 9301:9301
-  # dhcp_pxe:
-  #   image: registry.mcd.com:5000/maya2250/docker-pxe
-  #   network_mode: host
-  #   ports:
-  #     - "6953:53"
-  #     - "67:67"
-  #     - "69:69"
-  # dhcp_exporter:
-  #   image: registry.mcd.com:5000/dnsmasq_exporter
-  #   ports:
-  #   - 9153:9153
+    restart: ${RESTART_POLICY}
+  dhcp_pxe:
+    image: registry.mcd.com:5000/maya2250/docker-pxe
+    network_mode: host
+    volumes:
+      - dhcp_leases:/var/lib/misc/
+      - ./mountPoints/tftp:/srv/tftp/
+      - ./mountPoints/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
+    restart: ${RESTART_POLICY}
+  dhcp_exporter:
+    image: registry.mcd.com:5000/dnsmasq_exporter
+    volumes:
+      - dhcp_leases:/var/lib/misc/
+    ports:
+    - 9153:9153
+    restart: ${RESTART_POLICY}
 volumes:
   registry_data:
   registry_certs:
@@ -224,3 +229,4 @@ volumes:
   squid_certs:
   ca_reverseproxy_certs:
   registryui_reverseproxy_certs:
+  dhcp_leases:

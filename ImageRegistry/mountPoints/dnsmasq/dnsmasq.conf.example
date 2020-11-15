@@ -1,0 +1,13 @@
+#https://github.com/imp/dnsmasq/blob/master/dnsmasq.conf.example
+user=root
+
+dhcp-range=MY_DHCP_RANGE
+dhcp-option=option:router,MY_GATEWAY_IP
+dhcp-option=option:dns-server,MY_DNS_SERVER_IP
+dhcp-boot=pxelinux.0
+dhcp-match=set:efi-x86_64,option:client-arch,7
+dhcp-boot=tag:efi-x86_64,bootx64.efi
+pxe-prompt="What system shall I netboot?"
+
+enable-tftp
+tftp-root=/srv/tftp/

@@ -9,10 +9,23 @@ $REGISTRY_UI_VERIFY_TLS = 'false',
 $REGISTRY_DELETE_ENABLE = $True
 ,$localHostAddress = '192.168.0.2'
 ,$domain = '.mcd.com'
+,$GF_SECURITY_ADMIN_PASSWORD = (Convertto-SecureString 'badPassword' -AsPlainText) # leave empty to generate a random one
 )
 
 Import-Module powershell-yaml
 
+$mountpointRoot = "./mountPoints"
+$foldersToCreate = @(
+    "$mountpointRoot/dnsmasq"
+    ,"$mountpointRoot/ca"
+    ,"$mountpointRoot/coredns"
+    ,"$mountpointRoot/grafana"
+    ,"$mountpointRoot/registry"
+    ,"$mountpointRoot/registryUI"
+    ,"$mountpointRoot/squid"
+)
+
+foreach($f in $foldersToCreate){If(-not (Test-Path $f)){New-Item $f -Force -ItemType Directory}}
 # Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
 If (-not (Test-Path ./mountPoints/ca/docker.crt)){
     Write-Error "Could not find a certificate signing cert at: ./mountPoints/ca/docker.crt" -ErrorAction Stop
@@ -43,7 +56,9 @@ function generatePassword() {
    Write-Output (Scramble-String($password) | ConvertTo-SecureString -AsPlainText -Force)
 }
 
-$GF_SECURITY_ADMIN_PASSWORD=$(generatePassword)
+if([string]::IsNullOrEmpty($GF_SECURITY_ADMIN_PASSWORD)){
+    $GF_SECURITY_ADMIN_PASSWORD=$(generatePassword)
+}
 
 function replaceWith{
     
@@ -70,7 +85,6 @@ if([string]::IsNullOrEmpty($registryBasicAuthPassword)){
 else{
     [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthUsername, "Process")
 }
-$GF_SECURITY_ADMIN_PASSWORD=$(generatePassword)
 
 Write-Host "Setting up the Registry config file"
 Remove-Item -Path ./mountPoints/registry/config.yml -ErrorAction Ignore
@@ -137,8 +151,9 @@ $($config.domain):53 {
 
 Remove-Item -Path $mountPointPath/$($config.domain).db -Force -errorAction Ignore 
 $SOARecord = $config.Records | where {$_.RecordType -eq "SOA"}
+Write-Log "Creating $($SOARecord | Measure-Object | Select -expandproperty count) SOARecord records" Verbose
 $ARecords = $config.Records | where {$_.RecordType -eq "A"}
-$ARecords
+Write-Log "Creating $($ARecords | Measure-Object | Select -expandproperty count) A records" Verbose
 $ARecordString = ""
 foreach ($record in $ARecords){
     $ARecordString += "$($record.Name) $($record.ZoneClass)  $($record.RecordType) $(if(-not[string]::IsNullOrEmpty($localHostAddress)){$localHostAddress}else{$record.IpAddress})
