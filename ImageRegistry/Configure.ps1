@@ -1,6 +1,10 @@
 #Requires -Version 7.0
 # Generates a .env file for the containers, and a Corefile and db file for CoreDNS. It loads a config/config.json file to get the records that you have setup. 
-param($RESTART_POLICY = 'always'
+param($RESTART_POLICY = 'always',
+$registryBasicAuthUsername = 'basicAuth',
+$registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
+$REGISTRY_UI_URL = 'https://Registry:5000',
+$REGISTRY_UI_VERIFY_TLS = 'false'
 ,$SQUID_HOSTNAME = '',
 $registryBasicAuthUsername = 'basicAuth',
 $registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
@@ -56,23 +60,34 @@ function generatePassword() {
    Write-Output (Scramble-String($password) | ConvertTo-SecureString -AsPlainText -Force)
 }
 
+
 if([string]::IsNullOrEmpty($GF_SECURITY_ADMIN_PASSWORD)){
     $GF_SECURITY_ADMIN_PASSWORD=$(generatePassword)
 }
 
 function replaceWith{
     
-  [cmdletbinding()]
-param(
-    [parameter(ValueFromPipeline)]
-    $string,
-$find = 'foo',
-$replace = 'bar'
-)
-PROCESS {
-    $outVal = $string -replace $find, $replace
-    Write-Output $outVal
+    [cmdletbinding()]
+  param(
+      [parameter(ValueFromPipeline)]
+      $string,
+  $find = 'foo',
+  $replace = 'bar'
+  )
+  PROCESS {
+      $outVal = $string -replace $find, $replace
+      Write-Output $outVal
+  }
+  }
+
+  
+if([string]::IsNullOrEmpty($registryBasicAuthUsername)){
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "Process")
 }
+if([string]::IsNullOrEmpty($registryBasicAuthPassword)){
+    $registryBasicAuthPassword = $(generatePassword)
+    Write-Host "Generated random password for registry basic auth password: $registryBasicAuthPassword"
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "Process")
 }
 if([string]::IsNullOrEmpty($registryBasicAuthUsername)){
     [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "Process")
@@ -152,7 +167,7 @@ $($config.domain):53 {
 Remove-Item -Path $mountPointPath/$($config.domain).db -Force -errorAction Ignore 
 $SOARecord = $config.Records | where {$_.RecordType -eq "SOA"}
 Write-Log "Creating $($SOARecord | Measure-Object | Select -expandproperty count) SOARecord records" Verbose
-$ARecords = $config.Records | where {$_.RecordType -eq "A"}
+$ARecords = $config.Records | where {$_.RecordType -eq "A"}s
 Write-Log "Creating $($ARecords | Measure-Object | Select -expandproperty count) A records" Verbose
 $ARecordString = ""
 foreach ($record in $ARecords){
@@ -160,5 +175,4 @@ foreach ($record in $ARecords){
 "
 }
 "$($SOARecord.Name) $($SOARecord.ZoneClass)  $($SOARecord.RecordType)   $($SOARecord.MNAME) $($SOARecord.RNAME) $($SOARecord.SERIAL)  $($SOARecord.REFRESH)  $($SOARecord.RETRY)  $($SOARecord.EXPIRE) $($SOARecord.TTL) 
-$ARecordString
-" | Set-Content -Path $mountPointPath/$($config.domain).db
+$ARecordString" | Set-Content -Path $mountPointPath/$($config.domain).db

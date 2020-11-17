@@ -48,8 +48,10 @@ services:
         - "ForwardPort=8888"
         - "ForwardHost=ca"
     ports:
-      - 80:80
-      - 443:443
+      - 8080:80
+      - 8043:443
+    volumes: 
+      - ca_reverseproxy_certs:/etc/nginx/conf.d
     volumes:
       - ca_reverseproxy_certs:/etc/nginx/conf.d
   certgetter:
@@ -113,7 +115,7 @@ services:
       - registry_data:/backup/registry_data:ro    # Mount the registry data volume (as read-only)
       - ./backups/registry:/archive                      # Mount a local folder as the backup archive
   registryui:
-    hostname: registry
+    hostname: registryui
     depends_on:
       - registry
     build:
@@ -136,8 +138,8 @@ services:
         - "ForwardPort=8000"
         - "ForwardHost=registry"
     ports:
-      - 5081:80
-      - 5044:443
+      - 5080:80
+      - 5043:443
     volumes: 
       - registryui_reverseproxy_certs:/etc/nginx/conf.d
   dns: 
