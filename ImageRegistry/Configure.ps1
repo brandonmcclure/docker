@@ -5,8 +5,31 @@ $registryBasicAuthUsername = 'basicAuth',
 $registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
 $REGISTRY_UI_URL = 'https://Registry:5000',
 $REGISTRY_UI_VERIFY_TLS = 'false'
+,$SQUID_HOSTNAME = '',
+$registryBasicAuthUsername = 'basicAuth',
+$registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
+$REGISTRY_UI_URL = 'https://Registry:5000',
+$REGISTRY_UI_VERIFY_TLS = 'false',
+$REGISTRY_DELETE_ENABLE = $True
+,$localHostAddress = '192.168.0.2'
+,$domain = '.mcd.com'
+,$GF_SECURITY_ADMIN_PASSWORD = (Convertto-SecureString 'badPassword' -AsPlainText) # leave empty to generate a random one
 )
 
+Import-Module powershell-yaml
+
+$mountpointRoot = "./mountPoints"
+$foldersToCreate = @(
+    "$mountpointRoot/dnsmasq"
+    ,"$mountpointRoot/ca"
+    ,"$mountpointRoot/coredns"
+    ,"$mountpointRoot/grafana"
+    ,"$mountpointRoot/registry"
+    ,"$mountpointRoot/registryUI"
+    ,"$mountpointRoot/squid"
+)
+
+foreach($f in $foldersToCreate){If(-not (Test-Path $f)){New-Item $f -Force -ItemType Directory}}
 # Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
 If (-not (Test-Path ./mountPoints/ca/docker.crt)){
     Write-Error "Could not find a certificate signing cert at: ./mountPoints/ca/docker.crt" -ErrorAction Stop
@@ -36,6 +59,12 @@ function generatePassword() {
     
    Write-Output (Scramble-String($password) | ConvertTo-SecureString -AsPlainText -Force)
 }
+
+
+if([string]::IsNullOrEmpty($GF_SECURITY_ADMIN_PASSWORD)){
+    $GF_SECURITY_ADMIN_PASSWORD=$(generatePassword)
+}
+
 function replaceWith{
     
     [cmdletbinding()]
@@ -60,10 +89,36 @@ if([string]::IsNullOrEmpty($registryBasicAuthPassword)){
     Write-Host "Generated random password for registry basic auth password: $registryBasicAuthPassword"
     [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "Process")
 }
+if([string]::IsNullOrEmpty($registryBasicAuthUsername)){
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "Process")
+}
+if([string]::IsNullOrEmpty($registryBasicAuthPassword)){
+    $registryBasicAuthPassword = $(generatePassword)
+    Write-Host "Generated random password for registry basic auth password: $registryBasicAuthPassword"
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "Process")
+}
 else{
     [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthUsername, "Process")
 }
-$GF_SECURITY_ADMIN_PASSWORD=$(generatePassword)
+
+Write-Host "Setting up the Registry config file"
+Remove-Item -Path ./mountPoints/registry/config.yml -ErrorAction Ignore
+$registryConfig_yaml = Get-Content ./mountPoints/registry/config.yml.example -Raw
+$config = ConvertFrom-Yaml $registryConfig_yaml
+
+if (-not [string]::IsNullOrEmpty($REGISTRY_DELETE_ENABLE)){
+    $config.Delete.enabled = $REGISTRY_DELETE_ENABLE
+    
+}
+if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){
+    $config.http.host = $REGISTRY_UI_URL
+    
+}
+
+(ConvertTo-Yaml -Data $config) `
+-replace "(version: [0-9]+?\.[0-9]{1}).+","`$1"`
+ | Set-Content -path ./mountPoints/registry/config.yml -Force
+
 
 Write-Host "Setting up the RegistryUI config file"
 Remove-Item -Path ./mountPoints/registryUI/config.yml -ErrorAction Ignore
@@ -71,10 +126,15 @@ $registryUIConfig = Get-Content ./mountPoints/registryUI/config.yml.example
 $registryUIConfig `
 | foreach-object{if (-not [string]::IsNullOrEmpty($registryBasicAuthUsername)){$_ |replaceWith -find "registry_username: basicAuth" -replace "registry_username: $registryBasicAuthUsername"}} `
 | foreach-object{if (-not [string]::IsNullOrEmpty($registryBasicAuthPassword)){$_ | replaceWith -find "registry_password: basicAuth" -replace "registry_password: $(ConvertFrom-SecureString $registryBasicAuthPassword -AsPlainText  )"}} `
-| foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){$_ |replaceWith -find "https://Registry:5000" -replace "registry_url: $REGISTRY_UI_URL"}} `
+| foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){$_ |replaceWith -find "registry_url: https://Registry:5000" -replace "registry_url: $REGISTRY_UI_URL"}} `
 | foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_VERIFY_TLS)){$_ |replaceWith -find "verify_tls: true" -replace "verify_tls: $REGISTRY_UI_VERIFY_TLS"}} `
 | Add-Content -Path ./mountPoints/registryUI/config.yml -Force
+Remove-Item .env -Force -errorAction Ignore
+"visible_hostname proxy.$GF_SECURITY_ADMIN_PASSWORD )
+RESTART_POLICY=$RESTART_POLICY"`
+| Add-Content -Path .env
 
+Write-Host "configure .env file"
 Remove-Item .env -Force -errorAction Ignore
 "GF_SECURITY_ADMIN_PASSWORD=$(ConvertFrom-SecureString $GF_SECURITY_ADMIN_PASSWORD -AsPlainText  )
 RESTART_POLICY=$RESTART_POLICY"`
@@ -106,13 +166,13 @@ $($config.domain):53 {
 
 Remove-Item -Path $mountPointPath/$($config.domain).db -Force -errorAction Ignore 
 $SOARecord = $config.Records | where {$_.RecordType -eq "SOA"}
-$ARecords = $config.Records | where {$_.RecordType -eq "A"}
-$ARecords
+Write-Log "Creating $($SOARecord | Measure-Object | Select -expandproperty count) SOARecord records" Verbose
+$ARecords = $config.Records | where {$_.RecordType -eq "A"}s
+Write-Log "Creating $($ARecords | Measure-Object | Select -expandproperty count) A records" Verbose
 $ARecordString = ""
 foreach ($record in $ARecords){
-    $ARecordString += "$($record.Name) $($record.ZoneClass)  $($record.RecordType) $($record.IpAddress)
+    $ARecordString += "$($record.Name) $($record.ZoneClass)  $($record.RecordType) $(if(-not[string]::IsNullOrEmpty($localHostAddress)){$localHostAddress}else{$record.IpAddress})
 "
 }
 "$($SOARecord.Name) $($SOARecord.ZoneClass)  $($SOARecord.RecordType)   $($SOARecord.MNAME) $($SOARecord.RNAME) $($SOARecord.SERIAL)  $($SOARecord.REFRESH)  $($SOARecord.RETRY)  $($SOARecord.EXPIRE) $($SOARecord.TTL) 
-$ARecordString
-" | Set-Content -Path $mountPointPath/$($config.domain).db
+$ARecordString" | Set-Content -Path $mountPointPath/$($config.domain).db

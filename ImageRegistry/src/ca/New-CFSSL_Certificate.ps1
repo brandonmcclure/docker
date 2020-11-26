@@ -1,7 +1,11 @@
 param(
+	$dev_bindings = $true,
 	$certRequests = @(
-		[PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')}
-		,[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')}
+		[PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry')}
+		,[PSCustomObject]@{name = 'grafana'; hosts = @('registry','proxy')}
+		,[PSCustomObject]@{name = 'squid'; hosts = @('proxy'); uid = '200'; gid = '200'; signingProfile = "intermediate"}
+		,[PSCustomObject]@{name = 'registryui_reverseproxy'; hosts = @('ImageRegistry','registry');}
+		,[PSCustomObject]@{name = 'ca_reverseproxy'; hosts = @('ca');}
 	),
 	$Country = "US",
 	$State = "Colorado",
@@ -9,10 +13,37 @@ param(
 	$caURL = 'http://ca:8888',
 	$ca_basicaauth_Username = '',
 	$ca_basicaauth_Password = '',
-    $certOutPath = '/mnt'
+	$certOutPath = '/mnt',
+	$domainName = '.mcd.com' # Will be suffixed onto each host
 )
+$newRequests =@()
+foreach($certRequestIndex in 0..$(($certRequests | measure-object | select -ExpandProperty Count)-1)){
+	if([string]::IsNullOrEmpty($certRequestIndex.signingProfile)){
+		$signingProfile = "default"
+	}
+	$newRequest = $certRequests[$certRequestIndex]
+	$hosts = @()
+	$hosts += $newRequest.name
+	if(	 -not [string]::IsNullOrEmpty($domainName)){
+		$hosts +="$($newRequest.name)$domainName"
+	}
+	foreach($certRequestIndex_HostIndex in 0..$(($newRequest.hosts | measure-object | select -ExpandProperty Count)-1)){
+		if(	 -not [string]::IsNullOrEmpty($domainName)){
+			$hosts +="$($($certRequests[$certRequestIndex].hosts[$certRequestIndex_HostIndex]))$domainName"
+		}
+		$hosts += "$($certRequests[$certRequestIndex].hosts[$certRequestIndex_HostIndex])"
+
+	}
+	if($dev_bindings){
+		$hosts += @('localhost','127.0.0.1')
+	}
+
+	$newRequest.hosts = $hosts
+	$newRequests += $newRequest
+}
 Write-Host "certRequests"
-Get-Member -InputObject $certRequests
+$certRequests = $newRequests
+$certRequests | fl
 $authOptions = @{}
 if (-not [string]::IsNullOrEmpty($ca_basicaauth_Username)){
 	Write-Host "Makeing basic auth credentials"
@@ -30,6 +61,7 @@ Write-Host "Useing the ca url: $caURL"
 Write-Host "Creating certificates for $($certRequests | Measure-Object | Select-Object -ExpandProperty Count) requests"
 foreach ($request in $certRequests){
 	if (-not [bool]($request.PSobject.Properties.name -match "name") -or -not [bool]($request.PSobject.Properties.name -match "hosts")){
+		Write-Host $request
 		Write-Error "request def does not have a name or hosts property. Try again" -ErrorAction Stop
 	}
 	$request 
@@ -44,7 +76,10 @@ foreach ($request in $certRequests){
 					"L": "'+$Location+'"
 				}
 			],
-			"CN": "'+$request.name+'"
+			"CN": "'+$(if(	 -not [string]::IsNullOrEmpty($domainName)){
+				$hosts +="$($request.name)$domainName"
+			}else{$request.name})+'",
+		"profile":"'+$signingProfile+'"
 		}
 	}'
 
@@ -78,5 +113,11 @@ foreach ($request in $certRequests){
 	Get-ChildItem /work
 	Copy-Item -Path /work/cert.crt -Destination $certOutPath/$($request.name)_certs/cert.crt
 	Copy-Item -Path /work/cert.key -Destination $certOutPath/$($request.name)_certs/cert.key 
+
+	if (-not [string]::IsNullOrEmpty($request.uid) -and -not [string]::IsNullOrEmpty($request.gid)){
+		Write-Host "Setting the UID:GID ownership"
+		chown $($request.uid):$($request.gid) $certOutPath/$($request.name)_certs/cert.crt
+		chown $($request.uid):$($request.gid) $certOutPath/$($request.name)_certs/cert.key
+	}
 }
 tail -f /dev/null

@@ -7,6 +7,7 @@
 ## [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHUSER", "basicAuth", "Process")
 ## [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHPASSWORD", "basicAuth", "Process")
 ## [Environment]::SetEnvironmentVariable("RESTART_POLICY", "always", "Process") # no, on-failure, always,unless-stopped
+## [Environment]::SetEnvironmentVariable("HTTP_PROXY", "", "Process")
 ##
 ## Check the values with:
 ## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY", "Process")
@@ -51,6 +52,8 @@ services:
       - 8043:443
     volumes: 
       - ca_reverseproxy_certs:/etc/nginx/conf.d
+    volumes:
+      - ca_reverseproxy_certs:/etc/nginx/conf.d
   certgetter:
     depends_on:
       - ca
@@ -61,6 +64,7 @@ services:
       - grafana_certs:/mnt/grafana_certs
       - ca_reverseproxy_certs:/mnt/ca_reverseproxy_certs
       - registryui_reverseproxy_certs:/mnt/registryui_reverseproxy_certs
+      - squid_certs:/mnt/squid_certs
     # Tried real hard to run this script with parameters, specifically the array of PSObjects. I could shell in and run the command below just fine, but could not get it in a place for the entrypoint
     # pwsh -command "& /work/New-CFSSL_Certificate.ps1 -certRequests ([PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')},[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')})"
     entrypoint: ["pwsh", "/work/New-CFSSL_Certificate.ps1"]
@@ -90,6 +94,7 @@ services:
     volumes:
       - registry_data:/var/lib/registry
       - registry_certs:/certs
+      - ./mountPoints/registry/config.yml:/etc/docker/registry/config.yml
       - registry_auth:/auth
     labels:
       # Adding this label means this container should be stopped while it's being backed up:
@@ -104,6 +109,7 @@ services:
     restart: ${RESTART_POLICY}
     environment:
       BACKUP_CRON_EXPRESSION: "0 20 * * *"
+      HTTP_PROXY: $HTTP_PROXY
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro # Allow use of the "stop-during-backup" feature
       - registry_data:/backup/registry_data:ro    # Mount the registry data volume (as read-only)
@@ -130,7 +136,7 @@ services:
       dockerfile: Dockerfile
       args:
         - "ForwardPort=8000"
-        - "ForwardHost=registryui"
+        - "ForwardHost=registry"
     ports:
       - 5080:80
       - 5043:443
@@ -174,6 +180,41 @@ services:
      - ./MountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     env_file: .env
     restart: ${RESTART_POLICY}
+  squidproxy:
+    image: localhost:5000/sameersbn/squid # https://github.com/brandonmcclure/docker-squid?organization=brandonmcclure&organization=brandonmcclure
+    restart: ${RESTART_POLICY}
+    volumes:
+      - squid_cache:/var/spool/squid
+      - squid_log:/var/log/squid
+      - ./MountPoints/squid:/etc/squid
+      - squid_certs:/opt/conf/certs/
+    ports:
+      - 3128:3128
+      - 3180:80
+    #entrypoint: tail -f /dev/null
+  squidmetrics:
+    image: boynux/squid-exporter
+    environment:
+      SQUID_EXPORTER_LISTEN: ":9301"
+      SQUID_HOSTNAME: "proxy.example.com"
+    ports:
+      - 9301:9301
+    restart: ${RESTART_POLICY}
+  dhcp_pxe:
+    image: registry.mcd.com:5000/maya2250/docker-pxe
+    network_mode: host
+    volumes:
+      - dhcp_leases:/var/lib/misc/
+      - ./mountPoints/tftp:/srv/tftp/
+      - ./mountPoints/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
+    restart: ${RESTART_POLICY}
+  dhcp_exporter:
+    image: registry.mcd.com:5000/dnsmasq_exporter
+    volumes:
+      - dhcp_leases:/var/lib/misc/
+    ports:
+    - 9153:9153
+    restart: ${RESTART_POLICY}
 volumes:
   registry_data:
   registry_certs:
@@ -185,5 +226,9 @@ volumes:
   grafana_home:
   grafana_logs:
   grafana_certs:
+  squid_cache:
+  squid_log:
+  squid_certs:
   ca_reverseproxy_certs:
   registryui_reverseproxy_certs:
+  dhcp_leases:

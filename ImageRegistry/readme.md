@@ -29,6 +29,9 @@ Make sure you update the `forward` section with your dns servers. I included the
 
 Right now the .env file really only has 1 env variable that is useful, and that is the Grafana admin password. The `Configure.ps1` script will generate a random password for this. 
 
+## Squid
+I used this to get a good conifg: https://github.com/gmellini/squidproxy-conf
+
 ## Operation
 This is designed to run with `docker-compose up -d --build` There are 2 env variables that must be set on the machine running this:
 ```

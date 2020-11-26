@@ -38,6 +38,6 @@ RUN mkdir /auth \
 #     && chmod +x /opt/microsoft/powershell/7/pwsh \
 #     && ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
 
-HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
+HEALTHCHECK --interval=60s --timeout=3s --start-period=10s --retries=5 \
    CMD curl --insecure --fail -u $AuthUsername:$AuthPassword https://localhost:$apiPort/v2/_catalog \
    && curl --insecure --fail http://localhost:$metricsPort/metrics || exit 1
