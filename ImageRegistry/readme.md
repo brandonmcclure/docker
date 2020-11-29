@@ -2,9 +2,27 @@
 This started as me setting up a docker registry. It has morphed to include a CA and DNS services. 
 
 This is used for my learning and should not be used by anyone for anything "production" related. Feel free to PR or raise issues if you have any problems though, as I am interested in learning what works and what does not.
-
+docker exec -it registry bin/registry garbage-collect /etc/docker/registry/config.yml
 # More detailed description
-
+# Instructions
+#
+# Set the following environment variables before running/building:
+## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY", "localhost:5000", "Process")
+## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "basicAuth", "Process")
+## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "basicAuth", "Process")
+## [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHUSER", "basicAuth", "Process")
+## [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHPASSWORD", "basicAuth", "Process")
+## [Environment]::SetEnvironmentVariable("RESTART_POLICY", "no", "Process") # no, on-failure, always,unless-stopped
+## [Environment]::SetEnvironmentVariable("HTTP_PROXY", "", "Process")
+##
+## Check the values with:
+## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY", "Process")
+## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "Process")
+## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "Process")
+#
+# Notes for trying to get the cfssl to work with my intermeadeate CA
+# https://web.archive.org/web/20200718025349/https://propellered.com/posts/cfssl_setting_up/
+# https://web.archive.org/web/20200718025350/https://propellered.com/posts/cfssl_setting_up_ocsp_api/
 # How to run
 ## CA/CFSSL
 This expects a CA certificate (`docker.crt`) and key (`docker.key`) for signing, and a `ca-bundle.crt` bundle/chain of the signing cert/up to the root CA located at `/mountpoints/ca`

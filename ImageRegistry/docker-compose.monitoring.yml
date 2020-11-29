@@ -1,0 +1,59 @@
+version: '3.5'
+services:
+  dhcp_exporter:
+    image: registry.mcd.com:5000/dnsmasq_exporter
+    volumes:
+      - dhcp_leases:/var/lib/misc/
+    ports:
+      - 9153:9153
+    restart: ${RESTART_POLICY}
+  squidmetrics:
+    image: boynux/squid-exporter
+    environment:
+      SQUID_EXPORTER_LISTEN: ":9301"
+      SQUID_HOSTNAME: "proxy.mcd.com"
+      SQUID_PORT: "3128"
+    ports:
+      - 9301:9301
+    restart: ${RESTART_POLICY}
+  grafana:
+    image: grafana/grafana:7.1.5
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - grafana_plugins:/var/lib/grafana/plugins
+      - ./MountPoints/grafana/provisioning:/etc/grafana/provisioning
+      - ./MountPoints/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - grafana_home:/usr/share/grafana
+      - grafana_logs:/var/log/grafana
+      - grafana_certs:/mnt/certs
+    env_file: .env
+    restart: ${RESTART_POLICY}
+  prometheus:
+    depends_on:
+      - grafana
+    ports:
+      - '9090:9090'
+    image: prom/prometheus
+    volumes:
+     - ./MountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    env_file: .env
+    restart: ${RESTART_POLICY}
+volumes:
+  registry_data:
+  registry_certs:
+  registry_requested_certs:
+  registry_auth:
+  grafana_data:
+  grafana_plugins:
+  grafana_provisiong:
+  grafana_home:
+  grafana_logs:
+  grafana_certs:
+  squid_cache:
+  squid_log:
+  squid_certs:
+  ca_reverseproxy_certs:
+  registryui_reverseproxy_certs:
+  dhcp_leases:

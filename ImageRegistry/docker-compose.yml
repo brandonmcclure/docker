@@ -1,22 +1,4 @@
-# Instructions
-#
-# Set the following environment variables before running/building:
-## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY", "localhost:5000", "Process")
-## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "basicAuth", "Process")
-## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "basicAuth", "Process")
-## [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHUSER", "basicAuth", "Process")
-## [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHPASSWORD", "basicAuth", "Process")
-## [Environment]::SetEnvironmentVariable("RESTART_POLICY", "always", "Process") # no, on-failure, always,unless-stopped
-## [Environment]::SetEnvironmentVariable("HTTP_PROXY", "", "Process")
-##
-## Check the values with:
-## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY", "Process")
-## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "Process")
-## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "Process")
-#
-# Notes for trying to get the cfssl to work with my intermeadeate CA
-# https://web.archive.org/web/20200718025349/https://propellered.com/posts/cfssl_setting_up/
-# https://web.archive.org/web/20200718025350/https://propellered.com/posts/cfssl_setting_up_ocsp_api/
+
 version: '3.5'
 
 services:
@@ -48,10 +30,8 @@ services:
         - "ForwardPort=8888"
         - "ForwardHost=ca"
     ports:
-      - 8080:80
-      - 8043:443
-    volumes: 
-      - ca_reverseproxy_certs:/etc/nginx/conf.d
+      - 80:80
+      - 443:443
     volumes:
       - ca_reverseproxy_certs:/etc/nginx/conf.d
   certgetter:
@@ -74,74 +54,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-  registry:
-    hostname: registry_app
-    restart: ${RESTART_POLICY}
-    build:
-      context: src/registry
-      dockerfile: Dockerfile
-      args:
-        - "basicAuthUsername=${DOCKER_REGISTRY_AUTHUSER}"
-        - "basicAuthPassword=${DOCKER_REGISTRY_AUTHPASSWORD}"
-        - "apiPort=5000"
-        - "metricsPort=5001"
-    env_file: env.conf
-    depends_on:
-      - certgetter
-    ports:
-      - "5000:5000"
-      - "5001:5001"
-    volumes:
-      - registry_data:/var/lib/registry
-      - registry_certs:/certs
-      - ./mountPoints/registry/config.yml:/etc/docker/registry/config.yml
-      - registry_auth:/auth
-    labels:
-      # Adding this label means this container should be stopped while it's being backed up:
-      - "docker-volume-backup.stop-during-backup=true"
-   # This is a cool image to help take backups of volumes. You can take a manual backup of the running volume by executing:
-   # docker-compose exec backup ./backup.sh
-   # See https://github.com/futurice/docker-volume-backup for more info
-  registry_backup:
-    depends_on:
-      - registry
-    image: futurice/docker-volume-backup
-    restart: ${RESTART_POLICY}
-    environment:
-      BACKUP_CRON_EXPRESSION: "0 20 * * *"
-      HTTP_PROXY: $HTTP_PROXY
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro # Allow use of the "stop-during-backup" feature
-      - registry_data:/backup/registry_data:ro    # Mount the registry data volume (as read-only)
-      - ./backups/registry:/archive                      # Mount a local folder as the backup archive
-  registryui:
-    hostname: registryui
-    depends_on:
-      - registry
-    build:
-      context: src/registryui
-      dockerfile: Dockerfile
-    restart: ${RESTART_POLICY}
-    links:
-      - registry:registry
-    volumes:
-      - ./mountPoints/registryUI/config.yml:/opt/config.yml
-  registryui_reverseproxy:
-    depends_on: 
-      - certgetter
-      - registryui
-    restart: ${RESTART_POLICY}
-    build:
-      context: src/ca_reverseproxy
-      dockerfile: Dockerfile
-      args:
-        - "ForwardPort=8000"
-        - "ForwardHost=registry"
-    ports:
-      - 5080:80
-      - 5043:443
-    volumes: 
-      - registryui_reverseproxy_certs:/etc/nginx/conf.d
   dns: 
     image: coredns/coredns
     ports:
@@ -152,68 +64,6 @@ services:
       - ./MountPoints/coredns:/root
     command: -conf /root/Corefile
     env_file: .env
-    restart: ${RESTART_POLICY}
-  grafana:
-    image: grafana/grafana:7.1.5
-    ports:
-      - '3000:3000'
-    depends_on:
-      - dns
-      - registry
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - grafana_plugins:/var/lib/grafana/plugins
-      - ./MountPoints/grafana/provisioning:/etc/grafana/provisioning
-      - ./MountPoints/grafana/grafana.ini:/etc/grafana/grafana.ini
-      - grafana_home:/usr/share/grafana
-      - grafana_logs:/var/log/grafana
-      - grafana_certs:/mnt/certs
-    env_file: .env
-    restart: ${RESTART_POLICY}
-  prometheus:
-    depends_on:
-      - grafana
-    ports:
-      - '9090:9090'
-    image: prom/prometheus
-    volumes:
-     - ./MountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    env_file: .env
-    restart: ${RESTART_POLICY}
-  squidproxy:
-    image: localhost:5000/sameersbn/squid # https://github.com/brandonmcclure/docker-squid?organization=brandonmcclure&organization=brandonmcclure
-    restart: ${RESTART_POLICY}
-    volumes:
-      - squid_cache:/var/spool/squid
-      - squid_log:/var/log/squid
-      - ./MountPoints/squid:/etc/squid
-      - squid_certs:/opt/conf/certs/
-    ports:
-      - 3128:3128
-      - 3180:80
-    #entrypoint: tail -f /dev/null
-  squidmetrics:
-    image: boynux/squid-exporter
-    environment:
-      SQUID_EXPORTER_LISTEN: ":9301"
-      SQUID_HOSTNAME: "proxy.example.com"
-    ports:
-      - 9301:9301
-    restart: ${RESTART_POLICY}
-  dhcp_pxe:
-    image: registry.mcd.com:5000/maya2250/docker-pxe
-    network_mode: host
-    volumes:
-      - dhcp_leases:/var/lib/misc/
-      - ./mountPoints/tftp:/srv/tftp/
-      - ./mountPoints/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
-    restart: ${RESTART_POLICY}
-  dhcp_exporter:
-    image: registry.mcd.com:5000/dnsmasq_exporter
-    volumes:
-      - dhcp_leases:/var/lib/misc/
-    ports:
-    - 9153:9153
     restart: ${RESTART_POLICY}
 volumes:
   registry_data:

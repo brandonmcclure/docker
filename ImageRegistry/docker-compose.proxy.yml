@@ -1,0 +1,30 @@
+version: '3.5'
+services:
+  squidproxy:
+    image: localhost:5000/sameersbn/squid # https://github.com/brandonmcclure/docker-squid?organization=brandonmcclure&organization=brandonmcclure
+    restart: ${RESTART_POLICY}
+    volumes:
+      - squid_cache:/var/spool/squid
+      - squid_log:/var/log/squid
+      - ./MountPoints/squid:/etc/squid
+      - squid_certs:/opt/conf/certs/
+    ports:
+      - 3128:3128
+      - 3180:80
+volumes:
+  registry_data:
+  registry_certs:
+  registry_requested_certs:
+  registry_auth:
+  grafana_data:
+  grafana_plugins:
+  grafana_provisiong:
+  grafana_home:
+  grafana_logs:
+  grafana_certs:
+  squid_cache:
+  squid_log:
+  squid_certs:
+  ca_reverseproxy_certs:
+  registryui_reverseproxy_certs:
+  dhcp_leases:
