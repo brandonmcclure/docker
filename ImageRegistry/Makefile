@@ -1,9 +1,13 @@
-SHELL := pwsh.exe
-.SHELLFLAGS := -Command
+ifeq ($(OS),Windows_NT)
+    SHELL := pwsh.exe
+else
+   SHELL := pwsh
+endif
+.SHELLFLAGS := -NoProfile -Command 
 
 CORE_SERVICES := dns certgetter ca_reverseproxy ca
 BACKUP := registry_backup
-REGISTRY := registry registryui registryui_reverseproxy
+REGISTRY := registry registryui registryui_reverseproxy registry_mirror
 MONITORING := grafana prometheus dhcp_exporter
 PROXY := squidproxy squidmetrics
 ALL_SERVICES := ${CORE_SERVICES} ${MONITORING} ${PROXY} ${BACKUP}
@@ -19,8 +23,11 @@ CORE_SERVICES_FILES := -f docker-compose.yml
 include .env
 export
 
-all: core registry monitoring
-build:	
+all: down core registry monitoring
+setup:
+	@./Configure.ps1
+
+build: setup
 	@docker-compose ${COMPOSE_ALL_FILES} up -d --build ${ALL_SERVICES}
 
 monitoring:

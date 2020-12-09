@@ -1,6 +1,23 @@
 version: '3.5'
 
 services:
+  registry_mirror:
+    hostname: registry_mirror
+    restart: ${RESTART_POLICY}
+    build:
+      context: src/registry
+      dockerfile: Dockerfile
+      args:
+        - "apiPort=5000"
+        - "metricsPort=5001"
+    env_file: env.conf
+    ports:
+      - "5002:5000"
+      - "5003:5001"
+    volumes:
+      - registryMirror_data:/var/lib/registry
+      - registry_certs:/certs
+      - ./mountPoints/registryMirror/config.yml:/etc/docker/registry/config.yml
   registry:
     hostname: registry_app
     restart: ${RESTART_POLICY}
@@ -71,15 +88,5 @@ volumes:
   registry_certs:
   registry_requested_certs:
   registry_auth:
-  grafana_data:
-  grafana_plugins:
-  grafana_provisiong:
-  grafana_home:
-  grafana_logs:
-  grafana_certs:
-  squid_cache:
-  squid_log:
-  squid_certs:
-  ca_reverseproxy_certs:
+  registryMirror_data:
   registryui_reverseproxy_certs:
-  dhcp_leases:

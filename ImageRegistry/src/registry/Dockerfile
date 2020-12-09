@@ -10,9 +10,10 @@ ENV AuthPassword=$basicAuthPassword
 ENV apiPort=$apiPort
 ENV metricsPort=$metricsPort
 RUN mkdir /auth \
-&& echo "$AuthPassword" \
+&& if [ ! -z "${AuthUsername}" ]; then \
+ echo "$AuthPassword" \
 | htpasswd -niB $AuthUsername \
-> /auth/htpasswd 
+> /auth/htpasswd; fi
 # After https://github.com/docker/distribution/issues/3189 is resolved, upgrade to 2.7.1 of the image, which should bump up alpine 3.9 via this pr:https://github.com/docker/distribution/pull/2946?_pjax=%23js-repo-pjax-container
 # Then install PS on this container
 # RUN cat /etc/os-release

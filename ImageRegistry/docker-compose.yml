@@ -37,7 +37,9 @@ services:
   certgetter:
     depends_on:
       - ca
-    build: ./src/ca
+    build:
+      context: ./src/ca
+      dockerfile: Dockerfile
     restart: ${RESTART_POLICY}
     volumes:
       - registry_certs:/mnt/registry_certs
@@ -66,7 +68,6 @@ services:
     env_file: .env
     restart: ${RESTART_POLICY}
 volumes:
-  registry_data:
   registry_certs:
   registry_requested_certs:
   registry_auth:
