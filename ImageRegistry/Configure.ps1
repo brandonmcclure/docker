@@ -2,18 +2,16 @@
 # Generates a .env file for the containers, and a Corefile and db file for CoreDNS. It loads a config/config.json file to get the records that you have setup. 
 param($RESTART_POLICY = 'always',
 $registryBasicAuthUsername = 'basicAuth',
-$registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
-$REGISTRY_UI_URL = 'https://Registry:5000',
+[securestring]$registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
+$REGISTRY_UI_URL = 'https://Registry.mcd.com:5000',
 $REGISTRY_UI_VERIFY_TLS = 'false'
 ,$SQUID_HOSTNAME = '',
-$registryBasicAuthUsername = 'basicAuth',
-$registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
-$REGISTRY_UI_URL = 'https://Registry:5000',
-$REGISTRY_UI_VERIFY_TLS = 'false',
+$caBasicAuthUsername = 'basicAuth',
+[securestring]$caBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
 $REGISTRY_DELETE_ENABLE = $True
 ,$localHostAddress = '192.168.0.2'
 ,$domain = '.mcd.com'
-,$GF_SECURITY_ADMIN_PASSWORD = (Convertto-SecureString 'badPassword' -AsPlainText) # leave empty to generate a random one
+,[securestring]$GF_SECURITY_ADMIN_PASSWORD = (Convertto-SecureString 'badPassword' -AsPlainText) # leave empty to generate a random one
 )
 
 Import-Module powershell-yaml
@@ -29,6 +27,10 @@ $foldersToCreate = @(
     ,"$mountpointRoot/squid"
 )
 
+[Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHUSER", $caBasicAuthUsername, "User")
+[Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHPASSWORD", ($caBasicAuthPassword | ConvertFrom-SecureString), "User")
+
+
 foreach($f in $foldersToCreate){If(-not (Test-Path $f)){New-Item $f -Force -ItemType Directory}}
 # Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
 If (-not (Test-Path ./mountPoints/ca/docker.crt)){
@@ -40,6 +42,7 @@ If (-not (Test-Path ./mountPoints/ca/docker.key)){
 If (-not (Test-Path ./mountPoints/ca/ca-bundle.crt)){
     Write-Error "Could not find a ca bundle at: ./mountPoints/ca/ca-bundle.crt" -ErrorAction Stop
 }
+
 # Create Secure Passwords in the config
 function generatePassword() {
     
@@ -119,6 +122,19 @@ if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){
 -replace "(version: [0-9]+?\.[0-9]{1}).+","`$1"`
  | Set-Content -path ./mountPoints/registry/config.yml -Force
 
+ Write-Host "Setting up the RegistryMirror config file"
+Remove-Item -Path ./mountPoints/registryMirror/config.yml -ErrorAction Ignore
+$registryMirrorConfig_yaml = Get-Content ./mountPoints/registryMirror/config.yml.example -Raw
+$config = ConvertFrom-Yaml $registryMirrorConfig_yaml
+
+if (-not [string]::IsNullOrEmpty($REGISTRY_DELETE_ENABLE)){
+    $config.Delete.enabled = $REGISTRY_DELETE_ENABLE
+    
+}
+
+(ConvertTo-Yaml -Data $config) `
+-replace "(version: [0-9]+?\.[0-9]{1}).+","`$1"`
+ | Set-Content -path ./mountPoints/registryMirror/config.yml -Force
 
 Write-Host "Setting up the RegistryUI config file"
 Remove-Item -Path ./mountPoints/registryUI/config.yml -ErrorAction Ignore
@@ -167,11 +183,11 @@ $($config.domain):53 {
 Remove-Item -Path $mountPointPath/$($config.domain).db -Force -errorAction Ignore 
 $SOARecord = $config.Records | where {$_.RecordType -eq "SOA"}
 Write-Log "Creating $($SOARecord | Measure-Object | Select -expandproperty count) SOARecord records" Verbose
-$ARecords = $config.Records | where {$_.RecordType -eq "A"}s
+$ARecords = $config.Records | where {$_.RecordType -eq "A"}
 Write-Log "Creating $($ARecords | Measure-Object | Select -expandproperty count) A records" Verbose
 $ARecordString = ""
 foreach ($record in $ARecords){
-    $ARecordString += "$($record.Name) $($record.ZoneClass)  $($record.RecordType) $(if(-not[string]::IsNullOrEmpty($localHostAddress)){$localHostAddress}else{$record.IpAddress})
+    $ARecordString += "$($record.Name) $($record.ZoneClass)  $($record.RecordType) $(if(-not[string]::IsNullOrEmpty($localHostAddress) -and $record.IpAddress -eq 'localhost'){$localHostAddress}else{$record.IpAddress})
 "
 }
 "$($SOARecord.Name) $($SOARecord.ZoneClass)  $($SOARecord.RecordType)   $($SOARecord.MNAME) $($SOARecord.RNAME) $($SOARecord.SERIAL)  $($SOARecord.REFRESH)  $($SOARecord.RETRY)  $($SOARecord.EXPIRE) $($SOARecord.TTL) 

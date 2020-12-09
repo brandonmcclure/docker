@@ -1,7 +1,3 @@
-auth:
-  htpasswd:
-    realm: registry_realm
-    path: /auth/htpasswd
 log:
   accesslog:
     disabled: false
@@ -33,3 +29,5 @@ health:
 delete:
   enabled: true    
 
+proxy:
+  remoteURL: https://registry-1.docker.io
