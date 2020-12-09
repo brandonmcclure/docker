@@ -1,0 +1,7 @@
+services:
+  gnu:
+    image: eeacms/rsync
+    volumes:
+      - ./mountPoints/gnu:/data/
+    #Use the main gnu site, or a local mirror: https://www.gnu.org/prep/ftp.html
+    command: rsync -rltpHSv --delete-excluded rsync://ftp.gnu.org/gnu/ /data
