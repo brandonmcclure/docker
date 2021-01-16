@@ -16,8 +16,8 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - grafana_plugins:/var/lib/grafana/plugins
-      - ./MountPoints/grafana/provisioning:/etc/grafana/provisioning
-      - ./MountPoints/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./mountPoints/grafana/provisioning:/etc/grafana/provisioning
+      - ./mountPoints/grafana/grafana.ini:/etc/grafana/grafana.ini
       - grafana_home:/usr/share/grafana
       - grafana_logs:/var/log/grafana
       - grafana_certs:/mnt/certs
@@ -30,7 +30,7 @@ services:
       - '9090:9090'
     image: prom/prometheus
     volumes:
-     - ./MountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+     - ./mountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     env_file: .env
     restart: ${RESTART_POLICY}
 volumes:

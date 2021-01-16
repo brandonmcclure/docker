@@ -44,6 +44,21 @@ services:
    # This is a cool image to help take backups of volumes. You can take a manual backup of the running volume by executing:
    # docker-compose exec backup ./backup.sh
    # See https://github.com/futurice/docker-volume-backup for more info
+  registry_reverseproxy:
+    depends_on: 
+      - registry
+    restart: ${RESTART_POLICY}
+    build:
+      context: src/ca_reverseproxy
+      dockerfile: Dockerfile
+      args:
+        - "ForwardPort=5000"
+        - "ForwardHost=registry"
+    ports:
+      - 80:80
+      - 443:443
+    volumes: 
+      - registryui_reverseproxy_certs:/etc/nginx/conf.d
   registry_backup:
     depends_on:
       - registry

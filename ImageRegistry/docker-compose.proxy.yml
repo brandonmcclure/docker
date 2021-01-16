@@ -6,7 +6,7 @@ services:
     volumes:
       - squid_cache:/var/spool/squid
       - squid_log:/var/log/squid
-      - ./MountPoints/squid:/etc/squid
+      - ./mountPoints/squid:/etc/squid
       - squid_certs:/opt/conf/certs/
     ports:
       - 3128:3128
