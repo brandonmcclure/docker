@@ -18,6 +18,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    env_file: ca.env
     entrypoint: ["cfssl", "serve", "-ca", "/ca/docker.crt", "-ca-key", "/ca/docker.key", "-ca-bundle", "/ca/ca-bundle.crt", "-address", "0.0.0.0", "-loglevel", "0"] #, "-config", "/ca/config.json"]
   ca_reverseproxy:
     restart: ${RESTART_POLICY}
@@ -34,9 +35,11 @@ services:
       - 3441:443
     volumes:
       - ca_reverseproxy_certs:/etc/nginx/conf.d
+    env_file: ca.env
   certgetter:
     depends_on:
       - ca
+    env_file: ca.env
     build:
       context: ./src/ca
       dockerfile: Dockerfile
@@ -65,7 +68,7 @@ services:
     volumes:
       - ./mountPoints/coredns:/root
     command: -conf /root/Corefile
-    env_file: .env
+    env_file: ca.env
     restart: ${RESTART_POLICY}
 volumes:
   registry_certs:

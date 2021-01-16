@@ -146,16 +146,27 @@ $registryUIConfig `
 | foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){$_ |replaceWith -find "registry_url: https://Registry:5000" -replace "registry_url: $REGISTRY_UI_URL"}} `
 | foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_VERIFY_TLS)){$_ |replaceWith -find "verify_tls: true" -replace "verify_tls: $REGISTRY_UI_VERIFY_TLS"}} `
 | Add-Content -Path $mountpointRoot/registryUI/config.yml -Force
-Remove-Item .env -Force -errorAction Ignore
-"visible_hostname proxy.$GF_SECURITY_ADMIN_PASSWORD )
-RESTART_POLICY=$RESTART_POLICY"`
-| Add-Content -Path .env
 
 Write-Host "configure .env file"
 Remove-Item .env -Force -errorAction Ignore
 "GF_SECURITY_ADMIN_PASSWORD=$(ConvertFrom-SecureString $GF_SECURITY_ADMIN_PASSWORD -AsPlainText  )
 RESTART_POLICY=$RESTART_POLICY"`
 | Add-Content -Path .env
+
+Write-Host "configure registry.env file"
+Remove-Item registry.env -Force -errorAction Ignore
+"DOCKER_REGISTRY_AUTHUSER=$registryBasicAuthUsername
+DOCKER_REGISTRY_AUTHPASSWORD=$(ConvertFrom-SecureString $registryBasicAuthPassword -AsPlainText  )
+RESTART_POLICY=$RESTART_POLICY
+REGISTRY_HTTP_HOST=https://localhost:5000"`
+| Add-Content -Path registry.env
+
+Write-Host "configure ca.env file"
+Remove-Item ca.env -Force -errorAction Ignore
+"DOCKER_CA_AUTHUSER=$caBasicAuthUsername
+DOCKER_CA_AUTHPASSWORD=$(ConvertFrom-SecureString $caBasicAuthPassword -AsPlainText  )
+RESTART_POLICY=$RESTART_POLICY"`
+| Add-Content -Path ca.env
 
 Write-Host "Generating CoreDNS Corefile and db"
 $config = Get-Content ./config/config.json | convertfrom-json

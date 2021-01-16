@@ -10,7 +10,7 @@ services:
       args:
         - "apiPort=5000"
         - "metricsPort=5001"
-    env_file: env.conf
+    env_file: registry.env
     ports:
       - "5002:5000"
       - "5003:5001"
@@ -29,7 +29,7 @@ services:
         - "basicAuthPassword=${DOCKER_REGISTRY_AUTHPASSWORD}"
         - "apiPort=5000"
         - "metricsPort=5001"
-    env_file: env.conf
+    env_file: registry.env
     ports:
       - "5000:5000"
       - "5001:5001"
@@ -54,6 +54,7 @@ services:
       args:
         - "ForwardPort=5000"
         - "ForwardHost=registry"
+    env_file: registry.env
     ports:
       - 80:80
       - 443:443
@@ -79,6 +80,7 @@ services:
       context: src/registryUI
       dockerfile: Dockerfile
     restart: ${RESTART_POLICY}
+    env_file: registry.env
     links:
       - registry:registry
     volumes:
@@ -98,6 +100,7 @@ services:
       - 5044:443
     volumes: 
       - registryui_reverseproxy_certs:/etc/nginx/conf.d
+    env_file: registry.env
 volumes:
   registry_data:
   registry_certs:
