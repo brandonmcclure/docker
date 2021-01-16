@@ -76,7 +76,7 @@ services:
     depends_on:
       - registry
     build:
-      context: src/registryui
+      context: src/registryUI
       dockerfile: Dockerfile
     restart: ${RESTART_POLICY}
     links:

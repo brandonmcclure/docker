@@ -29,7 +29,8 @@ $foldersToCreate = @(
 
 [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHUSER", $caBasicAuthUsername, "User")
 [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHPASSWORD", ($caBasicAuthPassword | ConvertFrom-SecureString), "User")
-
+[Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", $registryBasicAuthUsername, "User")
+[Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", ($registryBasicAuthPassword | ConvertFrom-SecureString), "User")
 
 foreach($f in $foldersToCreate){If(-not (Test-Path $f)){New-Item $f -Force -ItemType Directory}}
 # Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
@@ -192,5 +193,11 @@ foreach ($record in $ARecords){
 }
 "$($SOARecord.Name) $($SOARecord.ZoneClass)  $($SOARecord.RecordType)   $($SOARecord.MNAME) $($SOARecord.RNAME) $($SOARecord.SERIAL)  $($SOARecord.REFRESH)  $($SOARecord.RETRY)  $($SOARecord.EXPIRE) $($SOARecord.TTL) 
 $ARecordString" | Set-Content -Path $mountPointPath/$($config.domain).db
+
+#Update Prometheus.yml
+$promConfig = Get-Content $mountpointRoot/prometheus/prometheus.yml 
+
+$promConfig |replaceWith -find ".example.com" -replace "$domain" `
+| Set-Content -Path $mountpointRoot/prometheus/prometheus.yml 
 
 Invoke-UnixLineEndings .
