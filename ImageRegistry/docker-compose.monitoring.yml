@@ -1,12 +1,5 @@
 version: '3.5'
 services:
-  dhcp_exporter:
-    image: registry.mcd.com:5000/dnsmasq_exporter
-    volumes:
-      - dhcp_leases:/var/lib/misc/
-    ports:
-      - 9153:9153
-    restart: ${RESTART_POLICY}
   squidmetrics:
     image: boynux/squid-exporter
     environment:

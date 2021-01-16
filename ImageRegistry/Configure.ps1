@@ -9,12 +9,12 @@ $REGISTRY_UI_VERIFY_TLS = 'false'
 $caBasicAuthUsername = 'basicAuth',
 [securestring]$caBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
 $REGISTRY_DELETE_ENABLE = $True
-,$localHostAddress = '192.168.0.2'
+,$localHostAddress = '192.168.0.105'
 ,$domain = '.mcd.com'
 ,[securestring]$GF_SECURITY_ADMIN_PASSWORD = (Convertto-SecureString 'badPassword' -AsPlainText) # leave empty to generate a random one
 )
 
-Import-Module powershell-yaml
+Import-Module powershell-yaml,FC_Log,FC_Core -force -ErrorAction Stop
 
 $mountpointRoot = "./mountPoints"
 $foldersToCreate = @(
@@ -85,23 +85,23 @@ function replaceWith{
 
   
 if([string]::IsNullOrEmpty($registryBasicAuthUsername)){
-    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "Process")
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "User")
 }
 if([string]::IsNullOrEmpty($registryBasicAuthPassword)){
     $registryBasicAuthPassword = $(generatePassword)
     Write-Host "Generated random password for registry basic auth password: $registryBasicAuthPassword"
-    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "Process")
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "User")
 }
 if([string]::IsNullOrEmpty($registryBasicAuthUsername)){
-    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "Process")
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "User")
 }
 if([string]::IsNullOrEmpty($registryBasicAuthPassword)){
     $registryBasicAuthPassword = $(generatePassword)
     Write-Host "Generated random password for registry basic auth password: $registryBasicAuthPassword"
-    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "Process")
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "User")
 }
 else{
-    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthUsername, "Process")
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthUsername, "User")
 }
 
 Write-Host "Setting up the Registry config file"
@@ -192,3 +192,5 @@ foreach ($record in $ARecords){
 }
 "$($SOARecord.Name) $($SOARecord.ZoneClass)  $($SOARecord.RecordType)   $($SOARecord.MNAME) $($SOARecord.RNAME) $($SOARecord.SERIAL)  $($SOARecord.REFRESH)  $($SOARecord.RETRY)  $($SOARecord.EXPIRE) $($SOARecord.TTL) 
 $ARecordString" | Set-Content -Path $mountPointPath/$($config.domain).db
+
+Invoke-UnixLineEndings .

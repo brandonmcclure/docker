@@ -30,8 +30,8 @@ services:
         - "ForwardPort=8888"
         - "ForwardHost=ca"
     ports:
-      - 80:80
-      - 443:443
+      - 3081:80
+      - 3441:443
     volumes:
       - ca_reverseproxy_certs:/etc/nginx/conf.d
   certgetter:
@@ -63,7 +63,7 @@ services:
         - 5353:5353
         - 5392:9253
     volumes:
-      - ./MountPoints/coredns:/root
+      - ./mountPoints/coredns:/root
     command: -conf /root/Corefile
     env_file: .env
     restart: ${RESTART_POLICY}

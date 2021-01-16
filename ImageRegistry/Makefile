@@ -7,15 +7,17 @@ endif
 
 CORE_SERVICES := dns certgetter ca_reverseproxy ca
 BACKUP := registry_backup
-REGISTRY := registry registryui registryui_reverseproxy registry_mirror
-MONITORING := grafana prometheus dhcp_exporter
+REGISTRY := registry registryui registryui_reverseproxy registry_mirror registry_reverseproxy
+MONITORING := grafana prometheus 
 PROXY := squidproxy squidmetrics
-ALL_SERVICES := ${CORE_SERVICES} ${MONITORING} ${PROXY} ${BACKUP}
+MISC := youtube_dl
+ALL_SERVICES := ${CORE_SERVICES} ${MONITORING} ${PROXY} ${BACKUP} ${MISC}
 
-COMPOSE_ALL_FILES := -f docker-compose.yml -f docker-compose.registry.yml -f docker-compose.monitoring.yml -f docker-compose.proxy.yml
+COMPOSE_ALL_FILES := -f docker-compose.yml -f docker-compose.registry.yml -f docker-compose.monitoring.yml -f docker-compose.proxy.yml ${COMPOSE_MISC_FILES}
 COMPOSE_MONITORING_FILES := -f docker-compose.monitoring.yml
 COMPOSE_PROXY_FILES := -f docker-compose.proxy.yml
 COMPOSE_REGISTRY_FILES := -f docker-compose.registry.yml
+COMPOSE_MISC_FILES := -f docker-compose.misc.yml
 CORE_SERVICES_FILES := -f docker-compose.yml
 # --------------------------
 
@@ -41,6 +43,9 @@ registry: core
 
 core:
 	@docker-compose ${CORE_SERVICES_FILES} up -d --build ${CORE_SERVICES}
+
+misc:
+	@docker-compose ${COMPOSE_MISC_FILES} up -d --build ${MISC_SERVICES}
 
 down:		
 	@docker-compose ${COMPOSE_ALL_FILES} down
