@@ -9,8 +9,8 @@ $REGISTRY_UI_VERIFY_TLS = 'false'
 $caBasicAuthUsername = 'basicAuth',
 [securestring]$caBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
 $REGISTRY_DELETE_ENABLE = $True
-,$localHostAddress = '192.168.0.105'
-,$domain = '.mcd.com'
+,[Parameter(Position=0,mandatory=$true)]$localHostAddress = ''
+,[Parameter(Position=1,mandatory=$true)]$domain = ''
 ,[securestring]$GF_SECURITY_ADMIN_PASSWORD = (Convertto-SecureString 'badPassword' -AsPlainText) # leave empty to generate a random one
 )
 
@@ -33,14 +33,14 @@ $foldersToCreate = @(
 
 foreach($f in $foldersToCreate){If(-not (Test-Path $f)){New-Item $f -Force -ItemType Directory}}
 # Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
-If (-not (Test-Path ./mountPoints/ca/docker.crt)){
-    Write-Error "Could not find a certificate signing cert at: ./mountPoints/ca/docker.crt" -ErrorAction Stop
+If (-not (Test-Path $mountpointRoot/ca/docker.crt)){
+    Write-Error "Could not find a certificate signing cert at: $mountpointRoot/ca/docker.crt" -ErrorAction Stop
 }
-If (-not (Test-Path ./mountPoints/ca/docker.key)){
-    Write-Error "Could not find a certificate signing key at: ./mountPoints/ca/docker.key" -ErrorAction Stop
+If (-not (Test-Path $mountpointRoot/ca/docker.key)){
+    Write-Error "Could not find a certificate signing key at: $mountpointRoot/ca/docker.key" -ErrorAction Stop
 }
-If (-not (Test-Path ./mountPoints/ca/ca-bundle.crt)){
-    Write-Error "Could not find a ca bundle at: ./mountPoints/ca/ca-bundle.crt" -ErrorAction Stop
+If (-not (Test-Path $mountpointRoot/ca/ca-bundle.crt)){
+    Write-Error "Could not find a ca bundle at: $mountpointRoot/ca/ca-bundle.crt" -ErrorAction Stop
 }
 
 # Create Secure Passwords in the config
@@ -105,8 +105,8 @@ else{
 }
 
 Write-Host "Setting up the Registry config file"
-Remove-Item -Path ./mountPoints/registry/config.yml -ErrorAction Ignore
-$registryConfig_yaml = Get-Content ./mountPoints/registry/config.yml.example -Raw
+Remove-Item -Path $mountpointRoot/registry/config.yml -ErrorAction Ignore
+$registryConfig_yaml = Get-Content $mountpointRoot/registry/config.yml.example -Raw
 $config = ConvertFrom-Yaml $registryConfig_yaml
 
 if (-not [string]::IsNullOrEmpty($REGISTRY_DELETE_ENABLE)){
@@ -120,11 +120,11 @@ if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){
 
 (ConvertTo-Yaml -Data $config) `
 -replace "(version: [0-9]+?\.[0-9]{1}).+","`$1"`
- | Set-Content -path ./mountPoints/registry/config.yml -Force
+ | Set-Content -path $mountpointRoot/registry/config.yml -Force
 
  Write-Host "Setting up the RegistryMirror config file"
-Remove-Item -Path ./mountPoints/registryMirror/config.yml -ErrorAction Ignore
-$registryMirrorConfig_yaml = Get-Content ./mountPoints/registryMirror/config.yml.example -Raw
+Remove-Item -Path $mountpointRoot/registryMirror/config.yml -ErrorAction Ignore
+$registryMirrorConfig_yaml = Get-Content $mountpointRoot/registryMirror/config.yml.example -Raw
 $config = ConvertFrom-Yaml $registryMirrorConfig_yaml
 
 if (-not [string]::IsNullOrEmpty($REGISTRY_DELETE_ENABLE)){
@@ -134,17 +134,17 @@ if (-not [string]::IsNullOrEmpty($REGISTRY_DELETE_ENABLE)){
 
 (ConvertTo-Yaml -Data $config) `
 -replace "(version: [0-9]+?\.[0-9]{1}).+","`$1"`
- | Set-Content -path ./mountPoints/registryMirror/config.yml -Force
+ | Set-Content -path $mountpointRoot/registryMirror/config.yml -Force
 
 Write-Host "Setting up the RegistryUI config file"
-Remove-Item -Path ./mountPoints/registryUI/config.yml -ErrorAction Ignore
-$registryUIConfig = Get-Content ./mountPoints/registryUI/config.yml.example
+Remove-Item -Path $mountpointRoot/registryUI/config.yml -ErrorAction Ignore
+$registryUIConfig = Get-Content $mountpointRoot/registryUI/config.yml.example
 $registryUIConfig `
 | foreach-object{if (-not [string]::IsNullOrEmpty($registryBasicAuthUsername)){$_ |replaceWith -find "registry_username: basicAuth" -replace "registry_username: $registryBasicAuthUsername"}} `
 | foreach-object{if (-not [string]::IsNullOrEmpty($registryBasicAuthPassword)){$_ | replaceWith -find "registry_password: basicAuth" -replace "registry_password: $(ConvertFrom-SecureString $registryBasicAuthPassword -AsPlainText  )"}} `
 | foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){$_ |replaceWith -find "registry_url: https://Registry:5000" -replace "registry_url: $REGISTRY_UI_URL"}} `
 | foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_VERIFY_TLS)){$_ |replaceWith -find "verify_tls: true" -replace "verify_tls: $REGISTRY_UI_VERIFY_TLS"}} `
-| Add-Content -Path ./mountPoints/registryUI/config.yml -Force
+| Add-Content -Path $mountpointRoot/registryUI/config.yml -Force
 Remove-Item .env -Force -errorAction Ignore
 "visible_hostname proxy.$GF_SECURITY_ADMIN_PASSWORD )
 RESTART_POLICY=$RESTART_POLICY"`
@@ -159,7 +159,7 @@ RESTART_POLICY=$RESTART_POLICY"`
 Write-Host "Generating CoreDNS Corefile and db"
 $config = Get-Content ./config/config.json | convertfrom-json
 
-$mountPointPath = "./Mountpoints/coredns"
+$mountPointPath = "$mountpointRoot/coredns"
 
 Remove-Item -Path $mountPointPath/Corefile -Force -errorAction Ignore 
 
