@@ -1,0 +1,19 @@
+version: '2.2'
+
+services:
+  diagrams.net:
+    image: "jgraph/drawio"
+    container_name: diagrams.net
+    restart: always
+    ports:
+      - 7124:8080 
+  cratch:
+    image: "leejoneshane/docker-scratch3"
+    container_name: scratch3
+    restart: always
+    ports:
+      - 7125:80 
+
+networks:
+  default:
+    driver: bridge
