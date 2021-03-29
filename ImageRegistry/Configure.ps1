@@ -25,6 +25,7 @@ $foldersToCreate = @(
     ,"$mountpointRoot/registry"
     ,"$mountpointRoot/registryUI"
     ,"$mountpointRoot/squid"
+	,,"$mountpointRoot/ingress"
 )
 
 [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHUSER", $caBasicAuthUsername, "User")
