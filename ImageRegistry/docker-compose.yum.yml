@@ -1,0 +1,5 @@
+services:
+  yum:
+    image: tmatsuo/reposync
+    volumes:
+      - ./mountPoints/yum:/repo

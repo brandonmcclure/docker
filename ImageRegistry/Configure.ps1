@@ -14,9 +14,9 @@ $REGISTRY_DELETE_ENABLE = $True
 ,[securestring]$GF_SECURITY_ADMIN_PASSWORD = (Convertto-SecureString 'badPassword' -AsPlainText) # leave empty to generate a random one
 )
 
-Import-Module powershell-yaml,FC_Log,FC_Core -force -ErrorAction Stop
+Import-Module powershell-yaml
 
-$mountpointRoot = "./mountPoints"
+$mountpointRoot = "$PSScriptRoot/mountPoints"
 $foldersToCreate = @(
     "$mountpointRoot/dnsmasq"
     ,"$mountpointRoot/ca"
@@ -25,7 +25,6 @@ $foldersToCreate = @(
     ,"$mountpointRoot/registry"
     ,"$mountpointRoot/registryUI"
     ,"$mountpointRoot/squid"
-	,,"$mountpointRoot/ingress"
 )
 
 [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHUSER", $caBasicAuthUsername, "User")
@@ -33,16 +32,17 @@ $foldersToCreate = @(
 [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", $registryBasicAuthUsername, "User")
 [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", ($registryBasicAuthPassword | ConvertFrom-SecureString), "User")
 
+
 foreach($f in $foldersToCreate){If(-not (Test-Path $f)){New-Item $f -Force -ItemType Directory}}
 # Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
-If (-not (Test-Path $mountpointRoot/ca/docker.crt)){
-    Write-Error "Could not find a certificate signing cert at: $mountpointRoot/ca/docker.crt" -ErrorAction Stop
+If (-not (Test-Path $PSScriptRoot/mountPoints/ca/docker.crt)){
+    Write-Error "Could not find a certificate signing cert at: $PSScriptRoot/mountPoints/ca/docker.crt" -ErrorAction Stop
 }
-If (-not (Test-Path $mountpointRoot/ca/docker.key)){
-    Write-Error "Could not find a certificate signing key at: $mountpointRoot/ca/docker.key" -ErrorAction Stop
+If (-not (Test-Path $PSScriptRoot/mountPoints/ca/docker.key)){
+    Write-Error "Could not find a certificate signing key at: $PSScriptRoot/mountPoints/ca/docker.key" -ErrorAction Stop
 }
-If (-not (Test-Path $mountpointRoot/ca/ca-bundle.crt)){
-    Write-Error "Could not find a ca bundle at: $mountpointRoot/ca/ca-bundle.crt" -ErrorAction Stop
+If (-not (Test-Path $PSScriptRoot/mountPoints/ca/ca-bundle.crt)){
+    Write-Error "Could not find a ca bundle at: $PSScriptRoot/mountPoints/ca/ca-bundle.crt" -ErrorAction Stop
 }
 
 # Create Secure Passwords in the config
@@ -87,28 +87,28 @@ function replaceWith{
 
   
 if([string]::IsNullOrEmpty($registryBasicAuthUsername)){
-    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "User")
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "Process")
 }
 if([string]::IsNullOrEmpty($registryBasicAuthPassword)){
     $registryBasicAuthPassword = $(generatePassword)
     Write-Host "Generated random password for registry basic auth password: $registryBasicAuthPassword"
-    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "User")
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "Process")
 }
 if([string]::IsNullOrEmpty($registryBasicAuthUsername)){
-    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "User")
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSERNAME", $registryBasicAuthUsername, "Process")
 }
 if([string]::IsNullOrEmpty($registryBasicAuthPassword)){
     $registryBasicAuthPassword = $(generatePassword)
     Write-Host "Generated random password for registry basic auth password: $registryBasicAuthPassword"
-    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "User")
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthPassword, "Process")
 }
 else{
-    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthUsername, "User")
+    [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", $registryBasicAuthUsername, "Process")
 }
 
 Write-Host "Setting up the Registry config file"
-Remove-Item -Path $mountpointRoot/registry/config.yml -ErrorAction Ignore
-$registryConfig_yaml = Get-Content $mountpointRoot/registry/config.yml.example -Raw
+Remove-Item -Path $PSScriptRoot/mountPoints/registry/config.yml -ErrorAction Ignore
+$registryConfig_yaml = Get-Content $PSScriptRoot/mountPoints/registry/config.yml.example -Raw
 $config = ConvertFrom-Yaml $registryConfig_yaml
 
 if (-not [string]::IsNullOrEmpty($REGISTRY_DELETE_ENABLE)){
@@ -122,11 +122,11 @@ if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){
 
 (ConvertTo-Yaml -Data $config) `
 -replace "(version: [0-9]+?\.[0-9]{1}).+","`$1"`
- | Set-Content -path $mountpointRoot/registry/config.yml -Force
+ | Set-Content -path $PSScriptRoot/mountPoints/registry/config.yml -Force
 
  Write-Host "Setting up the RegistryMirror config file"
-Remove-Item -Path $mountpointRoot/registryMirror/config.yml -ErrorAction Ignore
-$registryMirrorConfig_yaml = Get-Content $mountpointRoot/registryMirror/config.yml.example -Raw
+Remove-Item -Path $PSScriptRoot/mountPoints/registryMirror/config.yml -ErrorAction Ignore
+$registryMirrorConfig_yaml = Get-Content $PSScriptRoot/mountPoints/registryMirror/config.yml.example -Raw
 $config = ConvertFrom-Yaml $registryMirrorConfig_yaml
 
 if (-not [string]::IsNullOrEmpty($REGISTRY_DELETE_ENABLE)){
@@ -136,43 +136,34 @@ if (-not [string]::IsNullOrEmpty($REGISTRY_DELETE_ENABLE)){
 
 (ConvertTo-Yaml -Data $config) `
 -replace "(version: [0-9]+?\.[0-9]{1}).+","`$1"`
- | Set-Content -path $mountpointRoot/registryMirror/config.yml -Force
+ | Set-Content -path $PSScriptRoot/mountPoints/registryMirror/config.yml -Force
 
 Write-Host "Setting up the RegistryUI config file"
-Remove-Item -Path $mountpointRoot/registryUI/config.yml -ErrorAction Ignore
-$registryUIConfig = Get-Content $mountpointRoot/registryUI/config.yml.example
+Remove-Item -Path $PSScriptRoot/mountPoints/registryUI/config.yml -ErrorAction Ignore
+$registryUIConfig = Get-Content $PSScriptRoot/mountPoints/registryUI/config.yml.example
 $registryUIConfig `
 | foreach-object{if (-not [string]::IsNullOrEmpty($registryBasicAuthUsername)){$_ |replaceWith -find "registry_username: basicAuth" -replace "registry_username: $registryBasicAuthUsername"}} `
 | foreach-object{if (-not [string]::IsNullOrEmpty($registryBasicAuthPassword)){$_ | replaceWith -find "registry_password: basicAuth" -replace "registry_password: $(ConvertFrom-SecureString $registryBasicAuthPassword -AsPlainText  )"}} `
 | foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_URL)){$_ |replaceWith -find "registry_url: https://Registry:5000" -replace "registry_url: $REGISTRY_UI_URL"}} `
 | foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_VERIFY_TLS)){$_ |replaceWith -find "verify_tls: true" -replace "verify_tls: $REGISTRY_UI_VERIFY_TLS"}} `
-| Add-Content -Path $mountpointRoot/registryUI/config.yml -Force
+| Add-Content -Path $PSScriptRoot/mountPoints/registryUI/config.yml -Force
+Remove-Item .env -Force -errorAction Ignore
+"visible_hostname proxy.$GF_SECURITY_ADMIN_PASSWORD )
+RESTART_POLICY=$RESTART_POLICY"`
+| Add-Content -Path .env
 
 Write-Host "configure .env file"
 Remove-Item .env -Force -errorAction Ignore
 "GF_SECURITY_ADMIN_PASSWORD=$(ConvertFrom-SecureString $GF_SECURITY_ADMIN_PASSWORD -AsPlainText  )
+DOCKER_CA_AUTHUSER=$caBasicAuthUsername
+DOCKER_CA_AUTHPASSWORD=$(ConvertFrom-SecureString $caBasicAuthPassword -AsPlainText  )
 RESTART_POLICY=$RESTART_POLICY"`
 | Add-Content -Path .env
 
-Write-Host "configure registry.env file"
-Remove-Item registry.env -Force -errorAction Ignore
-"DOCKER_REGISTRY_AUTHUSER=$registryBasicAuthUsername
-DOCKER_REGISTRY_AUTHPASSWORD=$(ConvertFrom-SecureString $registryBasicAuthPassword -AsPlainText  )
-RESTART_POLICY=$RESTART_POLICY
-REGISTRY_HTTP_HOST=https://localhost:5000"`
-| Add-Content -Path registry.env
-
-Write-Host "configure ca.env file"
-Remove-Item ca.env -Force -errorAction Ignore
-"DOCKER_CA_AUTHUSER=$caBasicAuthUsername
-DOCKER_CA_AUTHPASSWORD=$(ConvertFrom-SecureString $caBasicAuthPassword -AsPlainText  )
-RESTART_POLICY=$RESTART_POLICY"`
-| Add-Content -Path ca.env
-
 Write-Host "Generating CoreDNS Corefile and db"
-$config = Get-Content ./config/config.json | convertfrom-json
+$config = Get-Content $PSScriptRoot/config/config.json | convertfrom-json
 
-$mountPointPath = "$mountpointRoot/coredns"
+$mountPointPath = "$PSScriptRoot/Mountpoints/coredns"
 
 Remove-Item -Path $mountPointPath/Corefile -Force -errorAction Ignore 
 
