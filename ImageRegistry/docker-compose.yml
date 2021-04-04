@@ -70,6 +70,14 @@ services:
     command: -conf /root/Corefile
     env_file: ca.env
     restart: ${RESTART_POLICY}
+  ingress:
+    image: nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./mountPoints/ingress/nginx.conf:/etc/nginx/nginx.conf
+      - ca_reverseproxy_certs:/etc/nginx/conf.d/ca
 volumes:
   registry_certs:
   registry_requested_certs:

@@ -1,0 +1,33 @@
+events {
+    use           epoll;
+    worker_connections  128;
+}
+http {
+	ssl_certificate /etc/nginx/conf.d/ca/cert.crt;
+ 	ssl_certificate_key /etc/nginx/conf.d/ca/cert.key;
+	ssl_session_timeout  5m;
+	ssl_protocols        SSLv3 TLSv1;
+	ssl_ciphers          ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+EXP;
+	ssl_prefer_server_ciphers   on;
+
+	server {
+    	listen      80;
+    	listen [::]:80;
+    	server_name scratch.example.com;
+
+    	location / {
+        	proxy_pass http://scratch.example.com:7125;
+    	}
+	}
+	server {
+    	listen      443 ssl;
+    	listen [::]:443 ssl;
+    	server_name ca.example.com;
+
+		
+
+    	location / {
+        	proxy_pass http://ca.example.com:3081;
+    	}
+	}
+}
