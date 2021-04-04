@@ -1,0 +1,27 @@
+services:
+  flatcar_mirror:
+    build: 
+      context: ./src/flatcar
+      dockerfile: flatcar_mirror.Dockerfile
+    volumes:
+      - ./mountPoints/flatcar:/data/
+    #entrypoint: "tail -f /dev/null"
+    command: [ "--channels", "stable,beta","--above-version","2500"]
+  flatcar_fileserver_stable:
+      image: halverneus/static-file-server
+      environment: 
+        - PORT=8080
+        - FOLDER=/var/www/
+      volumes:
+        - ./mountPoints/flatcar/stable:/var/www/
+      ports: 
+        - 8080:8080
+  flatcar_fileserver_beta:
+    image: halverneus/static-file-server
+    environment: 
+      - PORT=8080
+      - FOLDER=/var/www/
+    volumes:
+      - ./mountPoints/flatcar/beta:/var/www/
+    ports: 
+      - 8081:8080
