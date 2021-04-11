@@ -1,0 +1,27 @@
+version: '3.5'
+
+services:
+  factorio:
+    hostname: game
+    image: factoriotools/factorio
+    environment: 
+        - UPDATE_MODS_ON_START=false
+        - GENERATE_NEW_SAVE=false
+        - PORT=9101
+        #- SAVE_NAME='Demetrius and Dad'
+    ports:
+      - "9101:9101/udp"
+      - "27015:27015/tcp"
+    volumes:
+      - ./mountPoint/factorio:/factorio  
+    restart: always 
+  exporter:
+    image: prom/node-exporter
+    command: --collector.textfile.directory=/textfiles
+    volumes:
+      - ./mountPoint/factorio/script-output/graftorio2:/textfiles # Windows
+      # - ~/Library/Application Support/factorio/script-output/graftorio/:/textfiles # macOS
+      # - /opt/factorio/script-output/graftorio:/textfiles # Linux
+    ports:
+      - 9100:9100
+    restart: always
