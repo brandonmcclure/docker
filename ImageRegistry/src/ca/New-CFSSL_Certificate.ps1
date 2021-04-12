@@ -6,6 +6,7 @@ param(
 		,[PSCustomObject]@{name = 'squid'; hosts = @('proxy'); uid = '200'; gid = '200'; signingProfile = "any"}
 		,[PSCustomObject]@{name = 'registryui_reverseproxy'; hosts = @('ImageRegistry','registry');}
 		,[PSCustomObject]@{name = 'ca_reverseproxy'; hosts = @('ca');}
+		,[PSCustomObject]@{name = 'nextcloud'; hosts = @('nc');}
 	),
 	$Country = "US",
 	$State = "Colorado",

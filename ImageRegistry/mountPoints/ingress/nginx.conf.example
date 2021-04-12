@@ -20,14 +20,37 @@ http {
     	}
 	}
 	server {
-    	listen      443 ssl;
-    	listen [::]:443 ssl;
+    	listen      80;
+    	listen [::]:80;
     	server_name ca.example.com;
 
-		
+		# this is the internal Docker DNS, cache only for 30s
+    	resolver 127.0.0.11 valid=30s;
+		return 301 https://$host$request_uri;
+	}
+	server {
+    	ssl_certificate /etc/nginx/conf.d/ca/cert.crt;
+ 	 	ssl_certificate_key /etc/nginx/conf.d/ca/cert.key;
+	 	ssl_session_timeout  5m;
+	 	ssl_protocols        TLSv1 TLSv1.1 TLSv1.2;
+	 	ssl_ciphers         HIGH:!aNULL:!MD5;
+	 	ssl_prefer_server_ciphers   on;
 
-    	location / {
-        	proxy_pass http://ca.example.com:3081;
-    	}
+     	listen      443 ssl;
+     	listen [::]:443 ssl;
+     	server_name ca.example.com;
+
+	 	# this is the internal Docker DNS, cache only for 30s
+     	resolver 127.0.0.11 valid=5s;
+     	location / {
+		 	proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header X-Forwarded-Proto $scheme;
+	 		set $upstream http://ca.example.com:3081;
+         	proxy_pass $upstream;
+
+			 proxy_redirect http://ca.example.com:3040 https://ca.example.com;
+     	}
 	}
 }

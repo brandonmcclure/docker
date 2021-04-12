@@ -31,8 +31,8 @@ services:
         - "ForwardPort=8888"
         - "ForwardHost=ca"
     ports:
-      - 3081:80
-      - 3441:443
+      - 127.0.0.1:3081:80
+      - 127.0.0.1:3441:443
     volumes:
       - ca_reverseproxy_certs:/etc/nginx/conf.d
     env_file: ca.env
@@ -50,6 +50,8 @@ services:
       - ca_reverseproxy_certs:/mnt/ca_reverseproxy_certs
       - registryui_reverseproxy_certs:/mnt/registryui_reverseproxy_certs
       - squid_certs:/mnt/squid_certs
+      - ldap_certs:/mnt/ldap_certs
+      - nextcloud_certs:/mnt/nextcloud_certs
     # Tried real hard to run this script with parameters, specifically the array of PSObjects. I could shell in and run the command below just fine, but could not get it in a place for the entrypoint
     # pwsh -command "& /work/New-CFSSL_Certificate.ps1 -certRequests ([PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')},[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')})"
     entrypoint: ["pwsh", "/work/New-CFSSL_Certificate.ps1"]
@@ -78,6 +80,20 @@ services:
     volumes:
       - ./mountPoints/ingress/nginx.conf:/etc/nginx/nginx.conf
       - ca_reverseproxy_certs:/etc/nginx/conf.d/ca
+      - grafana_certs:/etc/nginx/conf.d/grafana
+      - ldap_certs:/etc/nginx/conf.d/ldap
+      - nextcloud_certs:/etc/nginx/conf.d/nextcloud
+  myvault:
+      image: vault
+      container_name: myvault
+      ports:
+        - "127.0.0.1:8201:8200"
+      volumes:
+        - ./mountPoints/vault/file:/vault/file:rw
+        - ./mountPoints/vault/config:/vault/config:rw
+      cap_add:
+        - IPC_LOCK
+      entrypoint: vault server -config=/vault/config/vault.json
 volumes:
   registry_certs:
   registry_requested_certs:
@@ -93,4 +109,6 @@ volumes:
   squid_certs:
   ca_reverseproxy_certs:
   registryui_reverseproxy_certs:
+  ldap_certs:
   dhcp_leases:
+  nextcloud_certs:
