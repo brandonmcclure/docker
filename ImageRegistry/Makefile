@@ -5,59 +5,55 @@ else
 endif
 .SHELLFLAGS := -NoProfile -Command 
 
-CORE_SERVICES := dns certgetter ca_reverseproxy ca ingress
+CORE_SERVICES := dns certgetter ca ingress ldap ldap_ui
 BACKUP := registry_backup
-REGISTRY := registry registryui registryui_reverseproxy registry_mirror
+REGISTRY := registry registryui registry_mirror
 MONITORING := grafana prometheus nagios nagios_mysql
-ELASTIC := kib01 es01 es02 es03 logstash
+ELASTIC := es01 es02 es03 kib01 logstash docker_logbeat
 PROXY := squidproxy squidmetrics
+MISC := youtube_dl scratch diagrams.net vscode calibre
+NEXTCLOUD := app db
+ALL_SERVICES := ${CORE_SERVICES} ${MONITORING} ${PROXY} ${BACKUP} ${MISC} ${ELASTIC} ${NEXTCLOUD}
 
-FLATCAR_SERVICES := flatcar_fileserver_beta flatcar_fileserver_stable flatcar_mirror
-NUGET_SERVICES := baget
-ALL_SERVICES := ${CORE_SERVICES} ${MONITORING} ${PROXY} ${BACKUP} ${FLATCAR_SERVICES} ${NUGET_SERVICES} ${ELASTIC}
-
-COMPOSE_ALL_FILES := ${COMPOSE_ELASTIC_FILES} ${COMPOSE_FLATCAR_FILES} ${COMPOSE_NUGET_FILES} -f docker-compose.yml -f docker-compose.registry.yml -f docker-compose.monitoring.yml -f docker-compose.proxy.yml
-COMPOSE_ELASTIC_FILES := -f docker-compose.elastic.yml
+COMPOSE_ALL_FILES := -f docker-compose.yml ${COMPOSE_REGISTRY_FILES} ${COMPOSE_MONITORING_FILES} ${COMPOSE_PROXY_FILES} ${COMPOSE_MISC_FILES} ${COMPOSE_NEXTCLOUD_FILES} ${COMPOSE_ELASTIC_FILES}
 COMPOSE_MONITORING_FILES := -f docker-compose.monitoring.yml
 COMPOSE_PROXY_FILES := -f docker-compose.proxy.yml
 COMPOSE_REGISTRY_FILES := -f docker-compose.registry.yml
-
-COMPOSE_FLATCAR_FILES := -f docker-compose.flatcar.yml
-COMPOSE_NUGET_FILES := -f docker-compose.nuget.yml
-CORE_SERVICES_FILES := -f docker-compose.yml
+COMPOSE_MISC_FILES := -f docker-compose.misc.yml
+CORE_SERVICES_FILES := -f docker-compose.yml -f docker-compose.ldap.yml
+COMPOSE_ELASTIC_FILES := -f docker-compose.elastic.yml
+COMPOSE_NEXTCLOUD_FILES := -f docker-compose.nextcloud.yml
 # --------------------------
 
-# load .env so that Docker Swarm Commands has .env values too. (https://github.com/moby/moby/issues/29133)
-include .env
-export
 
-all: down core registry monitoring
+all: down core registry monitoring elastic
 setup:
 	@./Configure.ps1
 
-mirror_nuget: setup
-	@docker-compose ${COMPOSE_NUGET_FILES} up -d --build ${NUGET_SERVICES}
-
-mirror_flatcar: setup
-	@docker-compose ${COMPOSE_FLATCAR_FILES} up -d --build ${FLATCAR_SERVICES}
-
-build: setup
+build:
 	@docker-compose ${COMPOSE_ALL_FILES} up -d --build ${ALL_SERVICES}
 
-monitoring: core
+monitoring:
 	@docker-compose ${COMPOSE_MONITORING_FILES} up -d --build ${MONITORING}
-	
-elastic: core
-	@docker-compose ${COMPOSE_ELASTIC_FILES} up -d --build ${ELASTIC}
 
-proxy: core
+proxy:
 	@docker-compose ${COMPOSE_PROXY_FILES} up -d --build ${PROXY}
+
+nextcloud:
+	@docker-compose ${COMPOSE_NEXTCLOUD_FILES} up -d --build ${NEXTCLOUD}
+
+gitlab:
+	@docker-compose ${COMPOSE_NEXTCLOUD_FILES} up -d --build ${NEXTCLOUD}
 
 registry: core
 	@docker-compose ${COMPOSE_REGISTRY_FILES} up -d --build ${REGISTRY}
 
-core: setup
+core:
 	@docker-compose ${CORE_SERVICES_FILES} up -d --build ${CORE_SERVICES}
+elastic:
+	@docker-compose ${ELASTIC_SERVICES_FILES} up -d --build ${ELASTIC}
+misc:
+	@docker-compose ${COMPOSE_MISC_FILES} up -d --build ${MISC_SERVICES}
 
 down:		
 	@docker-compose ${COMPOSE_ALL_FILES} down
@@ -78,7 +74,7 @@ images:
 	@docker-compose $(COMPOSE_ALL_FILES) images ${ALL_SERVICES}
 
 clean: ## Remove all Containers and Delete Volume Data
-	@docker-compose ${COMPOSE_ALL_FILES} down -v
+	-docker-compose ${COMPOSE_ALL_FILES} down -v
 
 .PHONY: test
 test:

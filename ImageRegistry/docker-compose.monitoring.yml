@@ -4,7 +4,7 @@ services:
     image: boynux/squid-exporter
     environment:
       SQUID_EXPORTER_LISTEN: ":9301"
-      SQUID_HOSTNAME: "proxy.mcd.com"
+      SQUID_HOSTNAME: "proxy.example.com"
       SQUID_PORT: "3128"
     ports:
       - 9301:9301
@@ -21,7 +21,7 @@ services:
       - grafana_home:/usr/share/grafana
       - grafana_logs:/var/log/grafana
       - grafana_certs:/mnt/certs
-    env_file: .env
+   #env_file: .env
     restart: ${RESTART_POLICY}
   prometheus:
     depends_on:
@@ -31,12 +31,12 @@ services:
     image: prom/prometheus
     volumes:
      - ./mountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    env_file: .env
+  #  env_file: .env
     restart: ${RESTART_POLICY}
   nagios:
     image: ethnchao/nagios
     container_name: nagios
-    command: --enable-ndo --create-db --server-url http://nagios.cogito.dhha.org
+    command: --enable-ndo --create-db --server-url https://nagios.example.com
     ports:
       - 4000:80
       - 4001:3000

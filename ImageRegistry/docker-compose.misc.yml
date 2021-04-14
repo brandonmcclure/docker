@@ -1,19 +1,36 @@
 version: '2.2'
 
 services:
-  diagrams.net:
+  diagrams:
     image: "jgraph/drawio"
-    container_name: diagrams.net
+    container_name: diagrams
     restart: always
     ports:
       - 7124:8080 
-  cratch:
+  scratch:
     image: "leejoneshane/docker-scratch3"
     container_name: scratch3
     restart: always
     ports:
       - 7125:80 
-
+  vscode:
+    image: ghcr.io/linuxserver/code-server
+    env_file: vscode.env
+    container_name: vscode
+    restart: always
+    ports:
+      - 7126:8443
+  calibre:
+    image: ghcr.io/linuxserver/calibre
+    container_name: calibre
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    ports:
+      - 7127:8080
+      - 7128:8081
+    restart: unless-stopped
 networks:
   default:
     driver: bridge

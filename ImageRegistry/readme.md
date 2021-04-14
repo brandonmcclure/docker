@@ -91,3 +91,7 @@ localhost:5000/mcr.microsoft.com/mssql/server   latest              d2520a2df464
 then push it to our registry with: 
 
 `docker push localhost:5000/mcr.microsoft.com/mssql/server`
+
+# To Generate basicAuth credentials
+cd .\mountPoints\ingress\basicAuth\; docker run --rm -ti xmartlabs/htpasswd brandon basicAuth 
+> htpasswd

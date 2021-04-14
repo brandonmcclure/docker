@@ -4,9 +4,17 @@ param(
 		[PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry')}
 		,[PSCustomObject]@{name = 'grafana'; hosts = @('registry','proxy')}
 		,[PSCustomObject]@{name = 'squid'; hosts = @('proxy'); uid = '200'; gid = '200'; signingProfile = "any"}
-		,[PSCustomObject]@{name = 'registryui_reverseproxy'; hosts = @('ImageRegistry','registry');}
+		,[PSCustomObject]@{name = 'registryui'; hosts = @('ImageRegistry','registry');}
 		,[PSCustomObject]@{name = 'ca_reverseproxy'; hosts = @('ca');}
 		,[PSCustomObject]@{name = 'nextcloud'; hosts = @('nc');}
+		,[PSCustomObject]@{name = 'elastic'; hosts = @('elastic');}
+		,[PSCustomObject]@{name = 'kibana'; hosts = @('kibana');}
+		,[PSCustomObject]@{name = 'diagrams'; hosts = @('diagrams');}
+		,[PSCustomObject]@{name = 'nagios'; hosts = @('nagios');}
+		,[PSCustomObject]@{name = 'prometheus'; hosts = @('prometheus');}
+		,[PSCustomObject]@{name = 'vscode'; hosts = @('vscode');}
+		,[PSCustomObject]@{name = 'calibre'; hosts = @('calibre');}
+		,[PSCustomObject]@{name = 'mineos'; hosts = @('mineos');}
 	),
 	$Country = "US",
 	$State = "Colorado",
