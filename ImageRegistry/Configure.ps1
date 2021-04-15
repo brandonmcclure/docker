@@ -153,11 +153,11 @@ $registryUIConfig `
 | foreach-object{if (-not [string]::IsNullOrEmpty($REGISTRY_UI_VERIFY_TLS)){$_ |replaceWith -find "verify_tls: true" -replace "verify_tls: $REGISTRY_UI_VERIFY_TLS"}} `
 | Add-Content -Path $mountpointRoot/registryUI/config.yml -Force
 
-Write-Host "configure .env file"
-Remove-Item .env -Force -errorAction Ignore
+Write-Host "configure grafana.env file"
+Remove-Item grafana.env -Force -errorAction Ignore
 "GF_SECURITY_ADMIN_PASSWORD=$(ConvertFrom-SecureString $GF_SECURITY_ADMIN_PASSWORD -AsPlainText  )
 RESTART_POLICY=$RESTART_POLICY"`
-| Add-Content -Path .env
+| Add-Content -Path grafana.env
 
 Write-Host "configure registry.env file"
 Remove-Item registry.env -Force -errorAction Ignore
@@ -254,7 +254,7 @@ $ARecordString" | Set-Content -Path $mountPointPath/$($config.domain).db
 #Update Prometheus.yml
 $promConfig = Get-Content $mountpointRoot/prometheus/prometheus.yml 
 
-$promConfig |replaceWith -find ".example.com" -replace "$domain" `
+$promConfig |replaceWith -find ".example.com" -replace ".$domain" `
 | Set-Content -Path $mountpointRoot/prometheus/prometheus.yml 
 
 # Create Ingress

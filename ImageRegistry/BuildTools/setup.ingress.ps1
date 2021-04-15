@@ -1,5 +1,6 @@
 param($config,$domain = '')
 
+
 $outConfig = "events {
     use           epoll;
     worker_connections  128;
@@ -14,6 +15,13 @@ foreach($record in $config.Records){
 	if(-not [bool]($record.PSobject.Properties.name -match "port")){
 		continue;
 	}
+	if(-not [bool]($record.PSobject.Properties.name -match "upstreamScheme")){
+		$upstreamScheme = "http"
+	}
+	else{
+		$upstreamScheme = "https"
+	}
+
 	if(-not [bool]($record.PSobject.Properties.name -match "Authentication")){
 		$outConfig += "
 server {
@@ -45,10 +53,10 @@ server {
 		proxy_set_header X-Real-IP `$remote_addr;
 		proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto `$scheme;
-		 set `$upstream http://$($record.Name):$($record.port);
+		 set `$upstream $($upstreamScheme)://$($record.Name):$($record.port);
 		 proxy_pass `$upstream;
 
-		 proxy_redirect http://$($record.Name):$($record.port) https://$($record.Name).$domain;
+		 proxy_redirect $($upstreamScheme)://$($record.Name):$($record.port) https://$($record.Name).$domain;
 	}
 }"
 	}
@@ -85,10 +93,10 @@ server {
 		proxy_set_header X-Real-IP `$remote_addr;
 		proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto `$scheme;
-		 set `$upstream http://$($record.Name):$($record.port);
+		 set `$upstream $($upstreamScheme)://$($record.Name):$($record.port);
 		 proxy_pass `$upstream;
 
-		 proxy_redirect http://$($record.Name):$($record.port) https://$($record.Name).$domain;
+		 proxy_redirect $($upstreamScheme)://$($record.Name):$($record.port) https://$($record.Name).$domain;
 	}
 }"
 	}

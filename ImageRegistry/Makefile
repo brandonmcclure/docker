@@ -74,7 +74,7 @@ images:
 	@docker-compose $(COMPOSE_ALL_FILES) images ${ALL_SERVICES}
 
 clean: ## Remove all Containers and Delete Volume Data
-	-docker-compose ${COMPOSE_ALL_FILES} down -v
+	-docker-compose ${COMPOSE_ALL_FILES} down -v --remove-orphans
 
 .PHONY: test
 test:
