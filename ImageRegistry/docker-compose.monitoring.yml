@@ -13,6 +13,7 @@ services:
     image: grafana/grafana:7.1.5
     ports:
       - '3000:3000'
+    env_file: grafana.env
     volumes:
       - grafana_data:/var/lib/grafana
       - grafana_plugins:/var/lib/grafana/plugins
@@ -21,7 +22,6 @@ services:
       - grafana_home:/usr/share/grafana
       - grafana_logs:/var/log/grafana
       - grafana_certs:/mnt/certs
-   #env_file: .env
     restart: ${RESTART_POLICY}
   prometheus:
     depends_on:
@@ -31,8 +31,15 @@ services:
     image: prom/prometheus
     volumes:
      - ./mountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-  #  env_file: .env
+     - ./mountPoints/prometheus/ca/dhha_ca.crt:/mnt/ca/dhha_ca.crt
     restart: ${RESTART_POLICY}
+  prometheus_blackbox_exporter:
+    image: prom/blackbox-exporter:master
+    ports:
+      - 9115:9115
+    volumes:
+      - ./mountPoints/prometheus/blackbox.yml:/config/blackbox.yml
+    command: "--config.file=/config/blackbox.yml"
   nagios:
     image: ethnchao/nagios
     container_name: nagios
