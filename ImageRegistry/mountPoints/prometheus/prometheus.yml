@@ -25,3 +25,22 @@
       scrape_interval: 15s
       static_configs:
         - targets: [proxy.example.com:9301]
+    - job_name: 'blackbox'
+      metrics_path: /probe
+      params:
+        module: [http_2xx]  # Look for a HTTP 200 response.
+      static_configs:
+        - targets:
+          - http://prometheus.example.com:9115
+          - https://www.google.com
+          - https://cogitodocumentation.hosp.dhha.org
+          - https://prometheus.example.com
+          - https://elastic.example.com
+          - https://ca.example.com
+      relabel_configs:
+        - source_labels: [__address__]
+          target_label: __param_target
+        - source_labels: [__param_target]
+          target_label: instance
+        - target_label: __address__
+          replacement: prometheus.example.com:9115  # The blackbox exporter's real hostname:port.

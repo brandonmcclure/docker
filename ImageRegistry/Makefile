@@ -5,10 +5,10 @@ else
 endif
 .SHELLFLAGS := -NoProfile -Command 
 
-CORE_SERVICES := dns certgetter ca ingress ldap ldap_ui
+CORE_SERVICES := dns certgetter ca ingress
 BACKUP := registry_backup
 REGISTRY := registry registryui registry_mirror
-MONITORING := grafana prometheus nagios nagios_mysql
+MONITORING := grafana prometheus nagios nagios_mysql prometheus_blackbox_exporter
 ELASTIC := es01 es02 es03 kib01 logstash docker_logbeat
 PROXY := squidproxy squidmetrics
 MISC := youtube_dl scratch diagrams.net vscode calibre
@@ -20,7 +20,7 @@ COMPOSE_MONITORING_FILES := -f docker-compose.monitoring.yml
 COMPOSE_PROXY_FILES := -f docker-compose.proxy.yml
 COMPOSE_REGISTRY_FILES := -f docker-compose.registry.yml
 COMPOSE_MISC_FILES := -f docker-compose.misc.yml
-CORE_SERVICES_FILES := -f docker-compose.yml -f docker-compose.ldap.yml
+CORE_SERVICES_FILES := -f docker-compose.yml
 COMPOSE_ELASTIC_FILES := -f docker-compose.elastic.yml
 COMPOSE_NEXTCLOUD_FILES := -f docker-compose.nextcloud.yml
 # --------------------------
