@@ -16,7 +16,7 @@ param(
 		,[PSCustomObject]@{name = 'calibre'; hosts = @('calibre');}
 		,[PSCustomObject]@{name = 'mineos'; hosts = @('mineos');}
 		,[PSCustomObject]@{name = 'scratch'; hosts = @('scratch');}
-		,[PSCustomObject]@{name = 'promblackbox'; hosts = @('promblackbox');}
+		,[PSCustomObject]@{name = 'prometheusblackbox'; hosts = @('prometheusblackbox');}
 	),
 	$Country = "US",
 	$State = "Colorado",

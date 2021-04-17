@@ -41,6 +41,7 @@ services:
       - diagrams_certs:/mnt/diagrams_certs
       - nagios_certs:/mnt/nagios_certs
       - prometheus_certs:/mnt/prometheus_certs
+      - prometheusblackbox_certs:/mnt/prometheusblackbox_certs
       - vscode_certs:/mnt/vscode_certs
       - calibre_certs:/mnt/calibre_certs
       - mineos_certs:/mnt/mineos_certs
@@ -82,6 +83,7 @@ services:
       - diagrams_certs:/etc/nginx/conf.d/diagrams
       - nagios_certs:/etc/nginx/conf.d/nagios
       - prometheus_certs:/etc/nginx/conf.d/prometheus
+      - prometheusblackbox_certs:/etc/nginx/conf.d/prometheusblackbox
       - registryui_certs:/etc/nginx/conf.d/registryui
       - registry_certs:/etc/nginx/conf.d/registry
       - vscode_certs:/etc/nginx/conf.d/vscode
@@ -123,6 +125,7 @@ volumes:
   diagrams_certs:
   nagios_certs:
   prometheus_certs:
+  prometheusblackbox_certs:
   vscode_certs:
   calibre_certs:
   mineos_certs:

@@ -31,9 +31,8 @@
         module: [http_2xx]  # Look for a HTTP 200 response.
       static_configs:
         - targets:
-          - http://prometheus.example.com:9115
+          - https://prometheusblackbox.example.com
           - https://www.google.com
-          - https://cogitodocumentation.hosp.dhha.org
           - https://prometheus.example.com
           - https://elastic.example.com
           - https://ca.example.com
@@ -43,4 +42,4 @@
         - source_labels: [__param_target]
           target_label: instance
         - target_label: __address__
-          replacement: prometheus.example.com:9115  # The blackbox exporter's real hostname:port.
+          replacement: prometheusblackbox.example.com  # The blackbox exporter's real hostname:port.

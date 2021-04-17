@@ -1,5 +1,7 @@
-FROM prom/prometheus
-COPY prometheus.yml /etc/prometheus/prometheus.yml
+FROM prom/prometheus:v2.26.0
+USER root
+COPY ca-bundle.crt /tmp/ca-bundle.crt
 
-HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \ 
-    CMD wget --spider http://localhost:9090 || exit 1
+RUN cat /tmp/ca-bundle.crt >> /etc/ssl/certs/ca-certificates.crt
+
+USER nobody
