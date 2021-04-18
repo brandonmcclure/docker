@@ -2,10 +2,10 @@ param(
 	$dev_bindings = $true,
 	$certRequests = @(
 		[PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry')}
-		,[PSCustomObject]@{name = 'grafana'; hosts = @('registry','proxy')}
+		,[PSCustomObject]@{name = 'grafana'; hosts = @('grafana')}
 		,[PSCustomObject]@{name = 'squid'; hosts = @('proxy'); uid = '200'; gid = '200'; signingProfile = "any"}
 		,[PSCustomObject]@{name = 'registryui'; hosts = @('ImageRegistry','registry');}
-		,[PSCustomObject]@{name = 'ca_reverseproxy'; hosts = @('ca');}
+		,[PSCustomObject]@{name = 'ca'; hosts = @('ca');}
 		,[PSCustomObject]@{name = 'nextcloud'; hosts = @('nc');}
 		,[PSCustomObject]@{name = 'elastic'; hosts = @('elastic');}
 		,[PSCustomObject]@{name = 'kibana'; hosts = @('kibana');}
@@ -15,6 +15,8 @@ param(
 		,[PSCustomObject]@{name = 'vscode'; hosts = @('vscode');}
 		,[PSCustomObject]@{name = 'calibre'; hosts = @('calibre');}
 		,[PSCustomObject]@{name = 'mineos'; hosts = @('mineos');}
+		,[PSCustomObject]@{name = 'scratch'; hosts = @('scratch');}
+		,[PSCustomObject]@{name = 'prometheusblackbox'; hosts = @('prometheusblackbox');}
 	),
 	$Country = "US",
 	$State = "Colorado",
@@ -126,7 +128,9 @@ foreach ($request in $certRequests){
 	if (-not [string]::IsNullOrEmpty($request.uid) -and -not [string]::IsNullOrEmpty($request.gid)){
 		Write-Host "Setting the UID:GID ownership"
 		chown $($request.uid):$($request.gid) $certOutPath/$($request.name)_certs/cert.crt
+		chmod 444 $certOutPath/$($request.name)_certs/cert.crt
 		chown $($request.uid):$($request.gid) $certOutPath/$($request.name)_certs/cert.key
+		chmod 444 $certOutPath/$($request.name)_certs/cert.key
 	}
 }
 tail -f /dev/null

@@ -11,8 +11,6 @@ services:
     restart: ${RESTART_POLICY}
   grafana:
     image: grafana/grafana:7.1.5
-    ports:
-      - '3000:3000'
     env_file: grafana.env
     volumes:
       - grafana_data:/var/lib/grafana
@@ -26,17 +24,17 @@ services:
   prometheus:
     depends_on:
       - grafana
-    ports:
-      - '9090:9090'
-    image: prom/prometheus
+    build:
+        context: ./src/prometheus
+        dockerfile: Dockerfile
     volumes:
      - ./mountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
      - ./mountPoints/prometheus/ca/dhha_ca.crt:/mnt/ca/dhha_ca.crt
     restart: ${RESTART_POLICY}
-  prometheus_blackbox_exporter:
-    image: prom/blackbox-exporter:master
-    ports:
-      - 9115:9115
+  prometheusblackbox:
+    build: 
+        context: ./src/prometheusblackbox
+        dockerfile: Dockerfile
     volumes:
       - ./mountPoints/prometheus/blackbox.yml:/config/blackbox.yml
     command: "--config.file=/config/blackbox.yml"

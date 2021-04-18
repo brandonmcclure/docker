@@ -4,7 +4,7 @@ version: '3.5'
 services:
   ca:
     image: cfssl/cfssl
-    hostname: cfssl
+    hostname: ca
     domainname: cfssl
     restart: ${RESTART_POLICY}
     container_name: ca
@@ -31,7 +31,7 @@ services:
     volumes:
       - registry_certs:/mnt/registry_certs
       - grafana_certs:/mnt/grafana_certs
-      - ca_reverseproxy_certs:/mnt/ca_reverseproxy_certs
+      - ca_certs:/mnt/ca_certs
       - registryui_certs:/mnt/registryui_certs
       - squid_certs:/mnt/squid_certs
       - ldap_certs:/mnt/ldap_certs
@@ -41,9 +41,11 @@ services:
       - diagrams_certs:/mnt/diagrams_certs
       - nagios_certs:/mnt/nagios_certs
       - prometheus_certs:/mnt/prometheus_certs
+      - prometheusblackbox_certs:/mnt/prometheusblackbox_certs
       - vscode_certs:/mnt/vscode_certs
       - calibre_certs:/mnt/calibre_certs
       - mineos_certs:/mnt/mineos_certs
+      - scratch_certs:/mnt/scratch_certs
     # Tried real hard to run this script with parameters, specifically the array of PSObjects. I could shell in and run the command below just fine, but could not get it in a place for the entrypoint
     # pwsh -command "& /work/New-CFSSL_Certificate.ps1 -certRequests ([PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')},[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')})"
     entrypoint: ["pwsh", "/work/New-CFSSL_Certificate.ps1"]
@@ -65,14 +67,14 @@ services:
     env_file: ca.env
     restart: ${RESTART_POLICY}
   ingress:
-    image: nginx
+    image: nginx:1.19-alpine
     ports:
       - 80:80
       - 443:443
     volumes:
       - ./mountPoints/ingress/basicAuth:/etc/nginx/basicAuth
       - ./mountPoints/ingress/nginx.conf:/etc/nginx/nginx.conf
-      - ca_reverseproxy_certs:/etc/nginx/conf.d/ca
+      - ca_certs:/etc/nginx/conf.d/ca
       - grafana_certs:/etc/nginx/conf.d/grafana
       - ldap_certs:/etc/nginx/conf.d/ldap
       - nextcloud_certs:/etc/nginx/conf.d/nextcloud
@@ -81,11 +83,13 @@ services:
       - diagrams_certs:/etc/nginx/conf.d/diagrams
       - nagios_certs:/etc/nginx/conf.d/nagios
       - prometheus_certs:/etc/nginx/conf.d/prometheus
+      - prometheusblackbox_certs:/etc/nginx/conf.d/prometheusblackbox
       - registryui_certs:/etc/nginx/conf.d/registryui
       - registry_certs:/etc/nginx/conf.d/registry
       - vscode_certs:/etc/nginx/conf.d/vscode
       - calibre_certs:/etc/nginx/conf.d/calibre
       - mineos_certs:/etc/nginx/conf.d/mineos
+      - scratch_certs:/etc/nginx/conf.d/scratch
     restart: ${RESTART_POLICY}
   myvault:
       image: vault
@@ -111,7 +115,7 @@ volumes:
   squid_cache:
   squid_log:
   squid_certs:
-  ca_reverseproxy_certs:
+  ca_certs:
   registryui_certs:
   ldap_certs:
   dhcp_leases:
@@ -121,6 +125,8 @@ volumes:
   diagrams_certs:
   nagios_certs:
   prometheus_certs:
+  prometheusblackbox_certs:
   vscode_certs:
   calibre_certs:
   mineos_certs:
+  scratch_certs:
