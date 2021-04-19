@@ -248,14 +248,22 @@ foreach ($record in $ARecords){
     $ARecordString += "$($record.Name).$domain. $($record.ZoneClass)  $($record.RecordType) $(if(-not[string]::IsNullOrEmpty($localHostAddress) -and $record.IpAddress -eq 'localhost'){$localHostAddress}else{$record.IpAddress})
 "
 }
-"$($SOARecord.Name) $($SOARecord.ZoneClass)  $($SOARecord.RecordType)   $($SOARecord.MNAME) $($SOARecord.RNAME) $($SOARecord.SERIAL)  $($SOARecord.REFRESH)  $($SOARecord.RETRY)  $($SOARecord.EXPIRE) $($SOARecord.TTL) 
-$ARecordString" | Set-Content -Path $mountPointPath/$($config.domain).db
+
+
+    $SOAString = "$domain. IN SOA dns. $($config.DNS.MNAME) $($config.DNS.RNAME) $($config.DNS.SERIAL) $($config.DNS.REFRESH) $($config.DNS.RETRY) $($config.DNS.EXPIRE) $($config.DNS.TTL) 
+"
+
+
+"$SOAString $ARecordString" | Set-Content -Path $mountPointPath/$($config.domain).db
 
 #Update Prometheus.yml
 $promConfig = Get-Content $mountpointRoot/prometheus/prometheus.yml 
 
 $promConfig |replaceWith -find ".example.com" -replace ".$domain" `
 | Set-Content -Path $mountpointRoot/prometheus/prometheus.yml 
+
+# Create certgetter
+.\BuildTools\setup.certgetter.ps1 -config $config -domain $domain
 
 # Create Ingress
 $ingress = .\BuildTools\setup.ingress.ps1 -config $config -domain $domain
