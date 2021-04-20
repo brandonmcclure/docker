@@ -1,4 +1,3 @@
-
 version: '3.5'
 
 services:
@@ -29,23 +28,27 @@ services:
       dockerfile: Dockerfile
     restart: ${RESTART_POLICY}
     volumes:
-      - registry_certs:/mnt/registry_certs
-      - grafana_certs:/mnt/grafana_certs
-      - ca_certs:/mnt/ca_certs
-      - registryui_certs:/mnt/registryui_certs
-      - squid_certs:/mnt/squid_certs
-      - ldap_certs:/mnt/ldap_certs
-      - nextcloud_certs:/mnt/nextcloud_certs
-      - kibana_certs:/mnt/kibana_certs
-      - elastic_certs:/mnt/elastic_certs
-      - diagrams_certs:/mnt/diagrams_certs
-      - nagios_certs:/mnt/nagios_certs
-      - prometheus_certs:/mnt/prometheus_certs
-      - prometheusblackbox_certs:/mnt/prometheusblackbox_certs
-      - vscode_certs:/mnt/vscode_certs
-      - calibre_certs:/mnt/calibre_certs
-      - mineos_certs:/mnt/mineos_certs
-      - scratch_certs:/mnt/scratch_certs
+      - registry_certs:/mnt/registry_certs:rw
+      - grafana_certs:/mnt/grafana_certs:rw
+      - ca_certs:/mnt/ca_certs:rw
+      - registryui_certs:/mnt/registryui_certs:rw
+      - squid_certs:/mnt/squid_certs:rw
+      - ldap_certs:/mnt/ldap_certs:rw
+      - nextcloud_certs:/mnt/nextcloud_certs:rw
+      - kibana_certs:/mnt/kibana_certs:rw
+      - elastic_certs:/mnt/elastic_certs:rw
+      - diagrams_certs:/mnt/diagrams_certs:rw
+      - nagios_certs:/mnt/nagios_certs:rw
+      - prometheus_certs:/mnt/prometheus_certs:rw
+      - prometheusblackbox_certs:/mnt/prometheusblackbox_certs:rw
+      - vscode_certs:/mnt/vscode_certs:rw
+      - calibre_certs:/mnt/calibre_certs:rw
+      - mineos_certs:/mnt/mineos_certs:rw
+      - scratch_certs:/mnt/scratch_certs:rw
+      - ingress_certs:/mnt/ingress_certs:rw
+      - transmission_temp_certs:/mnt/transmission_temp_certs:rw
+      - transmission_persist_certs:/mnt/transmission_persist_certs:rw
+      - vault_certs:/mnt/vault_certs:rw
     # Tried real hard to run this script with parameters, specifically the array of PSObjects. I could shell in and run the command below just fine, but could not get it in a place for the entrypoint
     # pwsh -command "& /work/New-CFSSL_Certificate.ps1 -certRequests ([PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')},[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')})"
     entrypoint: ["pwsh", "/work/New-CFSSL_Certificate.ps1"]
@@ -62,7 +65,7 @@ services:
         - 5353:5353
         - 5392:9253
     volumes:
-      - ./mountPoints/coredns:/root
+      - ./mountPoints/coredns:/root:rw
     command: -conf /root/Corefile
     env_file: ca.env
     restart: ${RESTART_POLICY}
@@ -74,28 +77,35 @@ services:
     volumes:
       - ./mountPoints/ingress/basicAuth:/etc/nginx/basicAuth
       - ./mountPoints/ingress/nginx.conf:/etc/nginx/nginx.conf
-      - ca_certs:/etc/nginx/conf.d/ca
-      - grafana_certs:/etc/nginx/conf.d/grafana
-      - ldap_certs:/etc/nginx/conf.d/ldap
-      - nextcloud_certs:/etc/nginx/conf.d/nextcloud
-      - kibana_certs:/etc/nginx/conf.d/kibana
-      - elastic_certs:/etc/nginx/conf.d/elastic
-      - diagrams_certs:/etc/nginx/conf.d/diagrams
-      - nagios_certs:/etc/nginx/conf.d/nagios
-      - prometheus_certs:/etc/nginx/conf.d/prometheus
-      - prometheusblackbox_certs:/etc/nginx/conf.d/prometheusblackbox
-      - registryui_certs:/etc/nginx/conf.d/registryui
-      - registry_certs:/etc/nginx/conf.d/registry
-      - vscode_certs:/etc/nginx/conf.d/vscode
-      - calibre_certs:/etc/nginx/conf.d/calibre
-      - mineos_certs:/etc/nginx/conf.d/mineos
-      - scratch_certs:/etc/nginx/conf.d/scratch
+      - ca_certs:/etc/nginx/conf.d/ca:ro
+      - grafana_certs:/etc/nginx/conf.d/grafana:ro
+      - ldap_certs:/etc/nginx/conf.d/ldap:ro
+      - nextcloud_certs:/etc/nginx/conf.d/nextcloud:ro
+      - kibana_certs:/etc/nginx/conf.d/kibana:ro
+      - elastic_certs:/etc/nginx/conf.d/elastic:ro
+      - diagrams_certs:/etc/nginx/conf.d/diagrams:ro
+      - nagios_certs:/etc/nginx/conf.d/nagios:ro
+      - prometheus_certs:/etc/nginx/conf.d/prometheus:ro
+      - prometheusblackbox_certs:/etc/nginx/conf.d/prometheusblackbox:ro
+      - registryui_certs:/etc/nginx/conf.d/registryui:ro
+      - registry_certs:/etc/nginx/conf.d/registry:ro
+      - vscode_certs:/etc/nginx/conf.d/vscode:ro
+      - calibre_certs:/etc/nginx/conf.d/calibre:ro
+      - mineos_certs:/etc/nginx/conf.d/mineos:ro
+      - scratch_certs:/etc/nginx/conf.d/scratch:ro
+      - ingress_certs:/etc/nginx/conf.d/ingress:ro
+      - transmission_temp_certs:/etc/nginx/conf.d/transmission_temp:ro
+      - transmission_persist_certs:/etc/nginx/conf.d/transmission_persist:ro
+      - vault_certs:/etc/nginx/conf.d/vault:ro
     restart: ${RESTART_POLICY}
-  myvault:
+  ingress_prom_exporter:
+    image: nginx/nginx-prometheus-exporter:0.9.0
+    command: -nginx.scrape-uri=http://ingress:80/stub_status
+  vault:
       image: vault
-      container_name: myvault
+      container_name: vault
       ports:
-        - "127.0.0.1:8201:8200"
+        - "127.0.0.1:8200:8200"
       volumes:
         - ./mountPoints/vault/file:/vault/file:rw
         - ./mountPoints/vault/config:/vault/config:rw
@@ -130,3 +140,7 @@ volumes:
   calibre_certs:
   mineos_certs:
   scratch_certs:
+  ingress_certs:  
+  transmission_temp_certs:
+  transmission_persist_certs:
+  vault_certs:

@@ -5,7 +5,7 @@ else
 endif
 .SHELLFLAGS := -NoProfile -Command 
 
-CORE_SERVICES := dns certgetter ca ingress
+CORE_SERVICES := dns certgetter ca ingress ingress_prom_exporter vault
 BACKUP := registry_backup
 REGISTRY := registry registryui registry_mirror
 MONITORING := grafana prometheus nagios nagios_mysql prometheusblackbox
