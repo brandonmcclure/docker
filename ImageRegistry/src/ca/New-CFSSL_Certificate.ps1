@@ -18,7 +18,9 @@ param(
 		,[PSCustomObject]@{name = 'scratch'; hosts = @('scratch');}
 		,[PSCustomObject]@{name = 'prometheusblackbox'; hosts = @('prometheusblackbox');}
 		,[PSCustomObject]@{name = 'ingress'; hosts = @('ingress');}
-		
+		,[PSCustomObject]@{name = 'transmission_temp'; hosts = @('transmission_temp');}
+		,[PSCustomObject]@{name = 'transmission_persist'; hosts = @('transmission_persist');}
+		,[PSCustomObject]@{name = 'vault'; hosts = @('vault');}
 	),
 	$Country = "US",
 	$State = "Colorado",

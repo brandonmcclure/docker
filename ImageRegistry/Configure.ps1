@@ -250,11 +250,11 @@ foreach ($record in $ARecords){
 }
 
 
-    $SOAString = "$domain. IN SOA dns. $($config.DNS.MNAME) $($config.DNS.RNAME) $($config.DNS.SERIAL) $($config.DNS.REFRESH) $($config.DNS.RETRY) $($config.DNS.EXPIRE) $($config.DNS.TTL) 
+    $SOAString = "$domain. IN SOA $($config.DNS.MNAME)$domain. $($config.DNS.RNAME)$domain $($config.DNS.SERIAL) $($config.DNS.REFRESH) $($config.DNS.RETRY) $($config.DNS.EXPIRE) $($config.DNS.TTL)
 "
 
 
-"$SOAString $ARecordString" | Set-Content -Path $mountPointPath/$($config.domain).db
+"$SOAString$ARecordString" | Set-Content -Path $mountPointPath/$($config.domain).db
 
 #Update Prometheus.yml
 $promConfig = Get-Content $mountpointRoot/prometheus/prometheus.yml 

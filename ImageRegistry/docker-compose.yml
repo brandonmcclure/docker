@@ -1,4 +1,3 @@
-
 version: '3.5'
 
 services:
@@ -47,6 +46,9 @@ services:
       - mineos_certs:/mnt/mineos_certs:rw
       - scratch_certs:/mnt/scratch_certs:rw
       - ingress_certs:/mnt/ingress_certs:rw
+      - transmission_temp_certs:/mnt/transmission_temp_certs:rw
+      - transmission_persist_certs:/mnt/transmission_persist_certs:rw
+      - vault_certs:/mnt/vault_certs:rw
     # Tried real hard to run this script with parameters, specifically the array of PSObjects. I could shell in and run the command below just fine, but could not get it in a place for the entrypoint
     # pwsh -command "& /work/New-CFSSL_Certificate.ps1 -certRequests ([PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')},[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')})"
     entrypoint: ["pwsh", "/work/New-CFSSL_Certificate.ps1"]
@@ -92,12 +94,13 @@ services:
       - mineos_certs:/etc/nginx/conf.d/mineos:ro
       - scratch_certs:/etc/nginx/conf.d/scratch:ro
       - ingress_certs:/etc/nginx/conf.d/ingress:ro
+      - transmission_temp_certs:/etc/nginx/conf.d/transmission_temp:ro
+      - transmission_persist_certs:/etc/nginx/conf.d/transmission_persist:ro
+      - vault_certs:/etc/nginx/conf.d/vault:ro
     restart: ${RESTART_POLICY}
   ingress_prom_exporter:
     image: nginx/nginx-prometheus-exporter:0.9.0
     command: -nginx.scrape-uri=http://ingress:80/stub_status
-    ports:
-      - "127.0.0.1:9113:9113"
   vault:
       image: vault
       container_name: vault
@@ -137,4 +140,7 @@ volumes:
   calibre_certs:
   mineos_certs:
   scratch_certs:
-  ingress_certs:
+  ingress_certs:  
+  transmission_temp_certs:
+  transmission_persist_certs:
+  vault_certs:
