@@ -9,7 +9,7 @@ CORE_SERVICES := dns certgetter ca ingress ingress_prom_exporter vault
 BACKUP := registry_backup
 REGISTRY := registry registryui registry_mirror
 MONITORING := grafana prometheus nagios nagios_mysql prometheusblackbox
-ELASTIC := es01 es02 es03 kib01 logstash docker_logbeat
+ELASTIC := es01 es02 es03 kib01 logstash
 PROXY := squidproxy squidmetrics
 MISC := youtube_dl scratch diagrams.net vscode calibre
 NEXTCLOUD := app db
@@ -51,7 +51,7 @@ registry: core
 core:
 	@docker-compose ${CORE_SERVICES_FILES} up -d --build ${CORE_SERVICES}
 elastic:
-	@docker-compose ${ELASTIC_SERVICES_FILES} up -d --build ${ELASTIC}
+	@docker-compose ${COMPOSE_ELASTIC_FILES} up -d --build ${ELASTIC}
 misc:
 	@docker-compose ${COMPOSE_MISC_FILES} up -d --build ${MISC_SERVICES}
 

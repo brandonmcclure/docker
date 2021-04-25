@@ -49,16 +49,20 @@ foreach($record in $config.Records){
 	if([bool]($record.PSobject.Properties.name -match "upstreamScheme")){
 		$upstreamScheme = $record.upstreamScheme
 	}
+	$upstreamService = $record.Name
+	if([bool]($record.PSobject.Properties.name -match "upstreamService")){
+		$upstreamService = $record.upstreamService
+	}
 
 	$locations += "location / {
 		proxy_set_header Host `$host;
 		proxy_set_header X-Real-IP `$remote_addr;
 		proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto `$scheme;
-		 set `$upstream $($upstreamScheme)://$($record.Name):$($record.port);
+		 set `$upstream $($upstreamScheme)://$($upstreamService):$($record.port);
 		 proxy_pass `$upstream;
 
-		 proxy_redirect $($upstreamScheme)://$($record.Name):$($record.port) https://$($record.Name).$domain;
+		 proxy_redirect $($upstreamScheme)://$($upstreamService):$($record.port) https://$($record.Name).$domain;
 	}"
 
 	if( [bool]($record.PSobject.Properties.name -match "ingressMappings")){
