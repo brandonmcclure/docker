@@ -26,6 +26,7 @@
 		{"Name":"scratch","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"7125"},
 		{"Name":"diagrams","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"7124"},
 		{"Name":"vscode","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"7126"},
-		{"Name":"calibre","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"7123"}
+		{"Name":"calibre","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"7123"},
+		{"Name":"homer","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"8080"},
     ]
 }

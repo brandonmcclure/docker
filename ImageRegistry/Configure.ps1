@@ -15,6 +15,7 @@ $REGISTRY_DELETE_ENABLE = $True
 ,[string] $VSCode_TZ = 'Americas\Denver'
 ,$ldapOrg = ""
 ,[securestring]$LDAPAdminPassword = $null
+,[switch]$GenerateHomerConfig
 )
 
 Import-Module powershell-yaml,FC_Log,FC_Core -force -ErrorAction Stop
@@ -268,4 +269,10 @@ $promConfig |replaceWith -find ".example.com" -replace ".$domain" `
 # Create Ingress
 $ingress = .\BuildTools\setup.ingress.ps1 -config $config -domain $domain
 Set-Content -Path $mountpointRoot/ingress/nginx.conf -Value $ingress
-Invoke-UnixLineEndings -directory $PSScriptRoot -excludeExtensions @("mdb","MYI","MYD") -excludeFilter @("**\mointPoints\db*")
+
+# Create homer dashboard config
+if($GenerateHomerConfig){
+	.\BuildTools\setup.homer.ps1 -config $config
+}
+
+Invoke-UnixLineEndings -directory $PSScriptRoot -excludeExtensions @("mdb","MYI","MYD") -excludeFilter @("**\mointPoints\db*","**\mointPoints\homer*")

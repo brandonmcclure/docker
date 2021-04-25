@@ -8,7 +8,7 @@ endif
 CORE_SERVICES := dns certgetter ca ingress ingress_prom_exporter vault
 BACKUP := registry_backup
 REGISTRY := registry registryui registry_mirror
-MONITORING := grafana prometheus nagios nagios_mysql prometheusblackbox
+MONITORING := grafana prometheus nagios nagios_mysql prometheusblackbox homer
 ELASTIC := es01 es02 es03 kib01 logstash
 PROXY := squidproxy squidmetrics
 MISC := youtube_dl scratch diagrams.net vscode calibre
