@@ -268,4 +268,4 @@ $promConfig |replaceWith -find ".example.com" -replace ".$domain" `
 # Create Ingress
 $ingress = .\BuildTools\setup.ingress.ps1 -config $config -domain $domain
 Set-Content -Path $mountpointRoot/ingress/nginx.conf -Value $ingress
-Invoke-UnixLineEndings -directory $PSScriptRoot -excludeExtensions @("mdb","MYI","MYD")
+Invoke-UnixLineEndings -directory $PSScriptRoot -excludeExtensions @("mdb","MYI","MYD") -excludeFilter @("**\mointPoints\db*")

@@ -17,6 +17,7 @@ services:
       - data01:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
+    restart: ${RESTART_POLICY}
   es02:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.12.0
     container_name: es02
@@ -33,6 +34,7 @@ services:
         hard: -1
     volumes:
       - data02:/usr/share/elasticsearch/data
+    restart: ${RESTART_POLICY}
   es03:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.12.0
     container_name: es03
@@ -49,6 +51,7 @@ services:
         hard: -1
     volumes:
       - data03:/usr/share/elasticsearch/data
+    restart: ${RESTART_POLICY}
   kib01:
     image: docker.elastic.co/kibana/kibana:7.12.0
     container_name: kib01
@@ -57,29 +60,14 @@ services:
     environment:
       ELASTICSEARCH_URL: http://es01:9200
       ELASTICSEARCH_HOSTS: '["http://es01:9200","http://es02:9200","http://es03:9200"]'
+    restart: ${RESTART_POLICY}
   logstash:
     image: docker.elastic.co/logstash/logstash:7.12.0
     ports:
     - 12345:12345
     environment:
       TCP_PORT: 12345
-  metricbeat:
-    image: docker.elastic.co/beats/metricbeat:7.12.0
-    hostname: "es01-metricbeat"
-    user: root
-    networks:
-      - elastic
-    configs:
-      - source: mb_config
-        target: ./mountPoints/metricbeat/metricbeat.yml
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - metricbeat:/usr/share/metricbeat/data
-    env_file: elastic.env
-    # disable strict permission checks
-    command: ["--strict.perms=false", "-system.hostfs=/hostfs"]
-    deploy:
-      mode: global
+    restart: ${RESTART_POLICY}
 
 volumes:
   data01:

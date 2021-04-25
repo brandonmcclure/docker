@@ -104,8 +104,6 @@ services:
   vault:
       image: vault
       container_name: vault
-      ports:
-        - "127.0.0.1:8200:8200"
       volumes:
         - ./mountPoints/vault/file:/vault/file:rw
         - ./mountPoints/vault/config:/vault/config:rw
