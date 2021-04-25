@@ -21,6 +21,7 @@ param(
 		,[PSCustomObject]@{name = 'transmission_temp'; hosts = @('transmission_temp');}
 		,[PSCustomObject]@{name = 'transmission_persist'; hosts = @('transmission_persist');}
 		,[PSCustomObject]@{name = 'vault'; hosts = @('vault');}
+		,[PSCustomObject]@{name = 'homer'; hosts = @('homer');}
 	),
 	$Country = "US",
 	$State = "Colorado",

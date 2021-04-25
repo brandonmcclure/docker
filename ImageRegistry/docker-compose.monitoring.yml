@@ -74,6 +74,13 @@ services:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
     volumes:
       - ./mountPoints/nagios/db:/var/lib/mysql
+  homer:
+    image: b4bz/homer:21.03.2
+    volumes:
+      - ./mountPoints/homer/assets/:/www/assets
+    environment:
+      - UID=1000
+      - GID=1000
 volumes:
   registry_data:
   registry_certs:
