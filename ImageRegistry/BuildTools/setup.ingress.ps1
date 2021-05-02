@@ -1,7 +1,11 @@
 param($config,$domain = '',[switch] $DisableIngressStub)
 
 
-
+function CreateHtpasswd{
+	param($serviceName, $htpasswordPath)
+	$creds = Get-Credential -Message "Enter the credentials for the $($serviceName) basic auth"
+		(docker run --rm -it -v ${PWD}:/work bmcclure89/docker-htpassword $($creds.Username) $($creds.GetNetworkCredential().Password)) | Add-Content "$htpasswordPath"
+}
 $outConfig = "events {
     use           epoll;
     worker_connections  128;
@@ -103,11 +107,35 @@ server {
 }"
 	}
 	else{
+		$basicAuthPath = "$(Split-Path $PSScriptRoot -Parent)/mountPoints/ingress/basicAuth"
+		$htpasswordPath = "$basicAuthPath/$($record.Name).htpasswd"
+		$setupHTPasswd = $true
+		if(Test-Path $htpasswordPath){
+			$userResponse = Read-Host -Prompt "A htpasswd file alread exists for $($record.Name). Do you want to overwrite? (Type Yes to confirm"
+			if($userResponse -ne "Yes"){
+				Write-Log "Keeping the existing htpasswd file"
+				$setupHTPasswd = $false;
+			}
+			else{
+				Remove-Item $htpasswordPath
+			}
+		}
+
+		if($setupHTPasswd){
+			CreateHtpasswd -htpasswordPath $htpasswordPath -serviceName $record.Name
+			$userResponse = Read-Host -Prompt "Do you want to add another user for this service? (Yes/No)"
+			while($userResponse -eq "Yes"){
+				
+			CreateHtpasswd -htpasswordPath $htpasswordPath -serviceName $record.Name
+				$userResponse = Read-Host -Prompt "Do you want to add another user for this service? (Yes/No)"
+			}
+		}
+
 		$outConfig += "
 $SnippetHttpToHttpsRedirect
 server {
 	auth_basic           `"Administrator's Area`";
-	auth_basic_user_file /etc/nginx/basicAuth/.htpasswd;
+	auth_basic_user_file /etc/nginx/basicAuth/$($record.Name).htpasswd;
 	ssl_certificate /etc/nginx/conf.d/$($record.Name)/cert.crt;
 	 ssl_certificate_key /etc/nginx/conf.d/$($record.Name)/cert.key;
 	ssl_session_timeout  5m;

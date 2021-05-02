@@ -1,29 +1,30 @@
 # Synopsis
-This started as me setting up a docker registry. It has morphed to include a CA and DNS services. 
+This started as me setting up a docker registry. It has morphed to include a CA, DNS, prometheus to collect metrics, . 
 
 This is used for my learning and should not be used by anyone for anything "production" related. Feel free to PR or raise issues if you have any problems though, as I am interested in learning what works and what does not.
-docker exec -it registry bin/registry garbage-collect /etc/docker/registry/config.yml
-# More detailed description
-# Instructions
-#
-# Set the following environment variables before running/building:
-## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY", "localhost:5000", "Process")
-## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "basicAuth", "Process")
-## [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "basicAuth", "Process")
-## [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHUSER", "basicAuth", "Process")
-## [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHPASSWORD", "basicAuth", "Process")
-## [Environment]::SetEnvironmentVariable("RESTART_POLICY", "no", "Process") # no, on-failure, always,unless-stopped
-## [Environment]::SetEnvironmentVariable("HTTP_PROXY", "", "Process")
-##
-## Check the values with:
-## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY", "Process")
-## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "Process")
-## [Environment]::GetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "Process")
-#
-# Notes for trying to get the cfssl to work with my intermeadeate CA
-# https://web.archive.org/web/20200718025349/https://propellered.com/posts/cfssl_setting_up/
-# https://web.archive.org/web/20200718025350/https://propellered.com/posts/cfssl_setting_up_ocsp_api/
-# How to run
+
+
+# Quick start
+You wil need GNU make; pwsh core; docker/docker-compose. 
+
+Copy the `config/config.example` file to `config/config.json` and update your DNS forwarder at a minimum. This file drives the setup of the nginx ingress, and service specific .env files. 
+
+Run `Configure.ps1` It will prompt you for the IP address and domain to use. The IP address is what will be used in the CoreDNS configuration for any records in `config.json` that have a `localhost` type. You can also manually set IP addresses in the `config.json` to get DNS entries for other services running on your network that are not managed in these files. 
+
+I use a intermediate CA/key signed by my network's CA to act as the signer for the PKI. This allow me to revoke the intermediate CA if this docker network is compromised. You can generate your own with OpenSSL. The `Configure.ps1` script will not run until there are 3 files related to the PKI: `ca-bundle.crt`, `docker.crt` and `docker.key`. ca-bundle.crt is a composite certificate with my root CA and Int CA. `docker.crt` is the int ca, and `docker.key` is the private key for the int CA. These files will be surfaced as a bind mount into the CA container, and should be considered unsecure. **Do not use this in production, or with truly secret CAs!**
+
+Run `make core` from this directory. That will start the CFSSL/PKI, DNS, Certgetter and ingress services.
+
+Run `make registry` to start the registry/registry UI services. 
+
+Run `make monitoring` to start prometheus, grafana and nagios services. 
+
+Run `make elastic` starts up a 3 node elastic cluster and kibana. 
+
+There are a few other make targets you can use, checkout the `Makefile` for more info. 
+
+
+# Long start
 ## CA/CFSSL
 This expects a CA certificate (`docker.crt`) and key (`docker.key`) for signing, and a `ca-bundle.crt` bundle/chain of the signing cert/up to the root CA located at `/mountpoints/ca`
 
@@ -51,11 +52,7 @@ Right now the .env file really only has 1 env variable that is useful, and that 
 I used this to get a good conifg: https://github.com/gmellini/squidproxy-conf
 
 ## Operation
-This is designed to run with `docker-compose up -d --build` There are 2 env variables that must be set on the machine running this:
-```
-[Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", "basicAuth", "Process")
-[Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", "basicAuth", "Process")
-```
+This is designed to run with `docker-compose up -d --build` 
 
 See the registry in a web browser: <https://localhost:5000/v2/_catalog>
 
