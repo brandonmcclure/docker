@@ -6,3 +6,4 @@
 /ImageRegistry/mountPoints/ldap/slapdd
 /ImageRegistry/mountPoints/nagios/db
 /ImageRegistry/mountPoints/nextcloud/data
+*.gz
