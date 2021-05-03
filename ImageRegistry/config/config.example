@@ -11,7 +11,7 @@
         {"Name":"ca","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"8888"},
 		{"Name":"proxy","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost"},
         {"Name":"registry","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"5000","Authentication":"basic"},
-		{"Name":"registryui","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"5000"},
+		{"Name":"registryui","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"8000"},
         {"Name":"gateway","ZoneClass":"IN","RecordType":"A","IpAddress":"192.168.0.1"},
         {"Name":"grafana","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"3000","upstreamScheme":"https"},
 		{"Name":"prometheus","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"9090"},
