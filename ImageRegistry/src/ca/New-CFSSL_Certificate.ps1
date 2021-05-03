@@ -5,6 +5,7 @@ param(
 		,[PSCustomObject]@{name = 'grafana'; hosts = @('grafana')}
 		,[PSCustomObject]@{name = 'squid'; hosts = @('proxy'); uid = '200'; gid = '200'; signingProfile = "any"}
 		,[PSCustomObject]@{name = 'registryui'; hosts = @('ImageRegistry','registry');}
+		,[PSCustomObject]@{name = 'registry_mirror'; hosts = @('registry_mirror');}
 		,[PSCustomObject]@{name = 'ca'; hosts = @('ca');}
 		,[PSCustomObject]@{name = 'nextcloud'; hosts = @('nc');}
 		,[PSCustomObject]@{name = 'elastic'; hosts = @('elastic');}

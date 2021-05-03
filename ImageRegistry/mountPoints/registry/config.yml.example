@@ -1,35 +1,28 @@
-auth:
-  htpasswd:
-    realm: registry_realm
-    path: /auth/htpasswd
+storage:
+  cache:
+    blobdescriptor: inmemory
+  filesystem:
+    rootdirectory: /var/lib/registry
+http:
+  addr: :5000
+  debug:
+    addr: :5001
+    prometheus:
+      path: /metrics
+      enabled: true
+  host: https://Registry.mcd.com
+version: 0.1
 log:
   accesslog:
     disabled: false
   level: debug
   fields:
     service: registry
-version: 0.1
-http:
-  addr: :5000
-  host: https://Registry:5000
-  debug:
-    addr: :5001
-    prometheus:
-      enabled: true
-      path: /metrics
-  tls:
-    certificate: /certs/cert.crt
-    key: /certs/cert.key
-storage:
-  cache:
-    blobdescriptor: inmemory
-  filesystem:
-    rootdirectory: /var/lib/registry
 health:
   storagedriver:
     threshold: 3
-    enabled: true
     interval: 10s
+    enabled: true
 delete:
-  enabled: true    
+  enabled: true
 

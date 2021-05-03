@@ -4,40 +4,22 @@ services:
   registry_mirror:
     hostname: registry_mirror
     restart: ${RESTART_POLICY}
-    build:
-      context: src/registry
-      dockerfile: Dockerfile
-      args:
-        - "apiPort=5000"
-        - "metricsPort=5001"
-    env_file: registry.env
+    image: registry:2.7.1
     ports:
       - "5002:5000"
       - "5003:5001"
     volumes:
       - registryMirror_data:/var/lib/registry
-      - registry_certs:/certs
       - ./mountPoints/registryMirror/config.yml:/etc/docker/registry/config.yml
   registry:
     hostname: registry_app
+    image: registry:2.7.1
     restart: ${RESTART_POLICY}
-    build:
-      context: src/registry
-      dockerfile: Dockerfile
-      args:
-        - "basicAuthUsername=${DOCKER_REGISTRY_AUTHUSER}"
-        - "basicAuthPassword=${DOCKER_REGISTRY_AUTHPASSWORD}"
-        - "apiPort=5000"
-        - "metricsPort=5001"
-    env_file: registry.env
     ports:
-      - "5000:5000"
       - "5001:5001"
     volumes:
       - registry_data:/var/lib/registry
-      - registry_certs:/certs
       - ./mountPoints/registry/config.yml:/etc/docker/registry/config.yml
-      - registry_auth:/auth
     labels:
       # Adding this label means this container should be stopped while it's being backed up:
       - "docker-volume-backup.stop-during-backup=true"
@@ -71,8 +53,5 @@ services:
       - ./mountPoints/registryUI/config.yml:/opt/config.yml
 volumes:
   registry_data:
-  registry_certs:
-  registry_requested_certs:
-  registry_auth:
   registryMirror_data:
   registryui_reverseproxy_certs:
