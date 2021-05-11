@@ -1,33 +1,29 @@
+delete:
+  enabled: true
 log:
   accesslog:
     disabled: false
   level: debug
   fields:
     service: registry
-version: 0.1
 http:
   addr: :5000
-  host: https://Registry:5000
   debug:
     addr: :5001
     prometheus:
-      enabled: true
       path: /metrics
-  tls:
-    certificate: /certs/cert.crt
-    key: /certs/cert.key
+      enabled: true
+  host: http://registry_mirror
+version: 0.1
+proxy:
+  remoteURL: https://registry-1.docker.io
+health:
+  storagedriver:
+    threshold: 3
+    interval: 10s
+    enabled: true
 storage:
   cache:
     blobdescriptor: inmemory
   filesystem:
     rootdirectory: /var/lib/registry
-health:
-  storagedriver:
-    threshold: 3
-    enabled: true
-    interval: 10s
-delete:
-  enabled: true    
-
-proxy:
-  remoteURL: https://registry-1.docker.io

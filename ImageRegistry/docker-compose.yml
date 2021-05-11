@@ -2,7 +2,7 @@ version: '3.5'
 
 services:
   ca:
-    image: cfssl/cfssl
+    image: cfssl/cfssl:1.5.0
     hostname: ca
     domainname: cfssl
     restart: ${RESTART_POLICY}
@@ -32,6 +32,7 @@ services:
       - grafana_certs:/mnt/grafana_certs:rw
       - ca_certs:/mnt/ca_certs:rw
       - registryui_certs:/mnt/registryui_certs:rw
+      - registry_mirror_certs:/mnt/registry_mirror_certs:rw
       - squid_certs:/mnt/squid_certs:rw
       - ldap_certs:/mnt/ldap_certs:rw
       - nextcloud_certs:/mnt/nextcloud_certs:rw
@@ -90,6 +91,7 @@ services:
       - prometheusblackbox_certs:/etc/nginx/conf.d/prometheusblackbox:ro
       - registryui_certs:/etc/nginx/conf.d/registryui:ro
       - registry_certs:/etc/nginx/conf.d/registry:ro
+      - registry_mirror_certs:/etc/nginx/conf.d/registry_mirror:ro
       - vscode_certs:/etc/nginx/conf.d/vscode:ro
       - calibre_certs:/etc/nginx/conf.d/calibre:ro
       - mineos_certs:/etc/nginx/conf.d/mineos:ro
@@ -103,6 +105,7 @@ services:
   ingress_prom_exporter:
     image: nginx/nginx-prometheus-exporter:0.9.0
     command: -nginx.scrape-uri=http://ingress:80/stub_status
+    restart: ${RESTART_POLICY}
   vault:
       image: vault
       container_name: vault
@@ -112,6 +115,7 @@ services:
       cap_add:
         - IPC_LOCK
       entrypoint: vault server -config=/vault/config/vault.json
+      restart: ${RESTART_POLICY}
 volumes:
   registry_certs:
   registry_requested_certs:
@@ -127,6 +131,7 @@ volumes:
   squid_certs:
   ca_certs:
   registryui_certs:
+  registry_mirror_certs:
   ldap_certs:
   dhcp_leases:
   nextcloud_certs:
