@@ -11,8 +11,9 @@ services:
     image: "leejoneshane/docker-scratch3"
     container_name: scratch3
     restart: always
-    ports:
-      - 7125:80 
+  barcodegenerator:
+    image: "padiazg/barcode-generator"
+    restart: always
   vscode:
     image: ghcr.io/linuxserver/code-server
     env_file: vscode.env
