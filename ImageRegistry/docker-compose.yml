@@ -23,9 +23,7 @@ services:
     depends_on:
       - ca
     env_file: ca.env
-    build:
-      context: ./src/ca
-      dockerfile: Dockerfile
+    image: bmcclure/certgetter
     restart: ${RESTART_POLICY}
     volumes:
       - ./mountPoints/certgetter/certrequests.json:/mnt/certrequests.json:ro
