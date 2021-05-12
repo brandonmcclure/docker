@@ -23,9 +23,7 @@ services:
   prometheus:
     depends_on:
       - grafana
-    build:
-        context: ./src/prometheus
-        dockerfile: Dockerfile
+    image: registry.example.com/bmcclure89/prometheus:v2.26.0
     volumes:
      - ./mountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
      - ./mountPoints/prometheus/alerts:/etc/prometheus/alerts
@@ -42,9 +40,7 @@ services:
     image: prom/pushgateway
     restart: ${RESTART_POLICY} 
   prometheusblackbox:
-    build: 
-        context: ./src/prometheusblackbox
-        dockerfile: Dockerfile
+    image: registry.example.com/bmcclure89/prometheusblackbox:master
     volumes:
       - ./mountPoints/prometheus/blackbox.yml:/config/blackbox.yml
     command: "--config.file=/config/blackbox.yml"
@@ -84,7 +80,7 @@ services:
       - MYSQL_DATABASE=nagios
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
     volumes:
-      - ./mountPoints/nagios/db:/var/lib/mysql
+      - nagios_mysql_data:/var/lib/mysql
   homer:
     image: b4bz/homer:21.03.2
     volumes:
@@ -94,17 +90,12 @@ services:
       - GID=1000
 volumes:
   registry_data:
-  registry_certs:
-  registry_requested_certs:
   registry_auth:
   grafana_data:
   grafana_plugins:
+  grafana_logs:
   grafana_provisiong:
   grafana_home:
-  grafana_logs:
-  grafana_certs:
   squid_cache:
   squid_log:
-  squid_certs:
-  ca_reverseproxy_certs:
-  registryui_reverseproxy_certs:
+  nagios_mysql_data:

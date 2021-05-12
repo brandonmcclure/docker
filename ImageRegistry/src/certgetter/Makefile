@@ -6,10 +6,10 @@ endif
 
 .SHELLFLAGS := -NoProfile -Command
 
-REGISTRY_NAME := 
+REGISTRY_NAME := registry.example.com/
 REPOSITORY_NAME := bmcclure/
 IMAGE_NAME := certgetter
-TAG := :latest
+TAG := :lts-alpine-3.10
 
 
 all: build

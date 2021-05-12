@@ -23,7 +23,7 @@ services:
     depends_on:
       - ca
     env_file: ca.env
-    image: bmcclure/certgetter
+    image: registry.example.com/bmcclure/certgetter:lts-alpine-3.10
     restart: ${RESTART_POLICY}
     volumes:
       - ./mountPoints/certgetter/certrequests.json:/mnt/certrequests.json:ro
