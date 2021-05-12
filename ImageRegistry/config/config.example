@@ -30,5 +30,6 @@
 		{"Name":"vscode","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"7126"},
 		{"Name":"calibre","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"7123"},
 		{"Name":"homer","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"8080"},
+		{"Name":"barcodegenerator","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"3000"}
     ]
 }
