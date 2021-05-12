@@ -23,6 +23,8 @@ param(
 		,[PSCustomObject]@{name = 'transmission_persist'; hosts = @('transmission_persist');}
 		,[PSCustomObject]@{name = 'vault'; hosts = @('vault');}
 		,[PSCustomObject]@{name = 'homer'; hosts = @('homer');}
+		[PSCustomObject]@{name = 'alertmanager'; hosts = @('alertmanager');}
+		[PSCustomObject]@{name = 'pushgateway'; hosts = @('pushgateway');}
 	),
 	$Country = "US",
 	$State = "Colorado",

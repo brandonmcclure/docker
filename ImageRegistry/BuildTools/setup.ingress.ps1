@@ -1,4 +1,4 @@
-param($config,$domain = '',[switch] $DisableIngressStub)
+param($config,$domain = '',[switch] $DisableIngressStub,[int] $dnsTimeout = 5)
 
 
 function CreateHtpasswd{
@@ -43,8 +43,8 @@ foreach($record in $config.Records){
 		listen [::]:80;
 		server_name $($record.Name).$domain;
 	
-		# this is the internal Docker DNS, cache only for 30s
-		resolver 127.0.0.11 valid=30s;
+		# this is the internal Docker DNS, cache only for $($dnsTimeout)s
+		resolver 127.0.0.11 valid=$($dnsTimeout)s;
 		return 301 https://`$host`$request_uri;
 	}
 	"
@@ -100,8 +100,8 @@ server {
 	listen [::]:443 ssl;
 	server_name $($record.Name).$domain;
 
-	# this is the internal Docker DNS, cache only for 30s
-	resolver 127.0.0.11 valid=30s;
+	# this is the internal Docker DNS, cache only for $($dnsTimeout)s
+	resolver 127.0.0.11 valid=$($dnsTimeout)s;
 	$($locations -join '
 	')
 }"
@@ -146,8 +146,8 @@ server {
 	listen [::]:443 ssl;
 	server_name $($record.Name).$domain;
 
-	# this is the internal Docker DNS, cache only for 30s
-	resolver 127.0.0.11 valid=30s;
+	# this is the internal Docker DNS, cache only for $($dnsTimeout)s
+	resolver 127.0.0.11 valid=$($dnsTimeout)s;
 	$($locations -join '\r\n')
 }"
 	}

@@ -29,8 +29,19 @@ services:
         dockerfile: Dockerfile
     volumes:
      - ./mountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+     - ./mountPoints/prometheus/alerts:/etc/prometheus/alerts
      - ./mountPoints/prometheus/ca/dhha_ca.crt:/mnt/ca/dhha_ca.crt
     restart: ${RESTART_POLICY}
+  alertmanager:
+    depends_on:
+        - prometheus
+    image: quay.io/prometheus/alertmanager
+    restart: ${RESTART_POLICY}
+  pushgateway:
+    depends_on:
+        - prometheus
+    image: prom/pushgateway
+    restart: ${RESTART_POLICY} 
   prometheusblackbox:
     build: 
         context: ./src/prometheusblackbox
@@ -38,6 +49,7 @@ services:
     volumes:
       - ./mountPoints/prometheus/blackbox.yml:/config/blackbox.yml
     command: "--config.file=/config/blackbox.yml"
+    restart: ${RESTART_POLICY}
   nagios:
     image: ethnchao/nagios
     container_name: nagios
@@ -45,7 +57,7 @@ services:
     ports:
       - 4000:80
       - 4001:3000
-    restart: always
+    restart: ${RESTART_POLICY}
     logging:
       options:
         max-size: "10m"
@@ -61,7 +73,7 @@ services:
     container_name: mysql
     ports:
       - 3306:3306
-    restart: always
+    restart: ${RESTART_POLICY}
     logging:
       options:
         max-size: "10m"

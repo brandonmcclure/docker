@@ -51,6 +51,8 @@ services:
       - transmission_persist_certs:/mnt/transmission_persist_certs:rw
       - vault_certs:/mnt/vault_certs:rw
       - homer_certs:/mnt/homer_certs:rw
+      - alertmanager_certs:/mnt/alertmanager_certs:rw
+      - pushgateway_certs:/mnt/pushgateway_certs:rw
     # Tried real hard to run this script with parameters, specifically the array of PSObjects. I could shell in and run the command below just fine, but could not get it in a place for the entrypoint
     # pwsh -command "& /work/New-CFSSL_Certificate.ps1 -certRequests ([PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry','localhost','127.0.0.1')},[PSCustomObject]@{name = 'grafana'; hosts = @('grafana','localhost','127.0.0.1')})"
     entrypoint: ["pwsh", "/work/New-CFSSL_Certificate.ps1"]
@@ -101,6 +103,8 @@ services:
       - transmission_persist_certs:/etc/nginx/conf.d/transmission_persist:ro
       - vault_certs:/etc/nginx/conf.d/vault:ro
       - homer_certs:/etc/nginx/conf.d/homer:ro
+      - alertmanager_certs:/etc/nginx/conf.d/alertmanager:ro
+      - pushgateway_certs:/etc/nginx/conf.d/pushgateway:ro
     restart: ${RESTART_POLICY}
   ingress_prom_exporter:
     image: nginx/nginx-prometheus-exporter:0.9.0
@@ -150,3 +154,5 @@ volumes:
   transmission_persist_certs:
   vault_certs:
   homer_certs:
+  alertmanager_certs:
+  pushgateway_certs:

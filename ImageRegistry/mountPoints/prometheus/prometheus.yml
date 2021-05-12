@@ -1,9 +1,22 @@
 --- 
+  rule_files:
+    - "alerts/*"
+  alerting:
+    alertmanagers:
+    - static_configs:
+      - targets:
+        - alertmanager:9093
+      scheme: http
+      timeout: 10s
   global: 
     evaluation_interval: 15s
     scrape_interval: 15s
     scrape_timeout: 10s
   scrape_configs: 
+    - job_name: 'pushgateway'
+      honor_labels: true
+      static_configs:
+        - targets: ['pushgateway:9091']
     - job_name: coredns
       metrics_path: /metrics
       static_configs: 
@@ -11,11 +24,11 @@
     - job_name: prometheus
       static_configs: 
         - targets: 
-            - "dns.example.com:9090"    
+            - "prometheus:9090"    
     - job_name: registry
       metrics_path: /metrics
       static_configs:
-        - targets: [dns.example.com:5001]
+        - targets: [registry:5001]
     - job_name: 'docker-workers'
       scrape_interval: 15s
       metrics_path: /metrics
@@ -28,7 +41,7 @@
     - job_name: 'ingress'
       scrape_interval: 15s
       static_configs:
-        - targets: [ingress:9113]
+        - targets: [ingress_prom_exporter:9113]
     - job_name: 'blackbox_ping'
       metrics_path: /probe
       scrape_interval: 60s
@@ -57,10 +70,10 @@
       static_configs:
         - targets:
           - https://prometheusblackbox.example.com
-          - https://www.google.com
           - https://prometheus.example.com
           - https://elastic.example.com
           - https://ca.example.com
+          - https://graphite.example.com
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -68,3 +81,19 @@
           target_label: instance
         - target_label: __address__
           replacement: prometheusblackbox:9115  # The blackbox exporter's real hostname:port.
+    - job_name: 'fastblackbox'
+      metrics_path: /probe
+      scrape_interval: 10s
+      scrape_timeout: 10s
+      params:
+        module: [http_2xx]  # Look for a HTTP 200 response.
+      static_configs:
+        - targets:
+          - https://www.google.com      relabel_configs:
+        - source_labels: [__address__]
+          target_label: __param_target
+        - source_labels: [__param_target]
+          target_label: instance
+        - target_label: __address__
+          replacement: prometheusblackbox:9115  # The blackbox exporter's real hostname:port.
+
