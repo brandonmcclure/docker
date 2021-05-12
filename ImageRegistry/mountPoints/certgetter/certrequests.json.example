@@ -1,0 +1,150 @@
+[
+  {
+    "name": "registry",
+    "hosts": [
+      "ImageRegistry"
+    ]
+  },
+  {
+    "name": "grafana",
+    "hosts": [
+      "grafana"
+    ]
+  },
+  {
+    "name": "squid",
+    "hosts": [
+      "proxy"
+    ],
+    "uid": "200",
+    "gid": "200",
+    "signingProfile": "any"
+  },
+  {
+    "name": "registryui",
+    "hosts": [
+      "ImageRegistry",
+      "registry"
+    ]
+  },
+  {
+    "name": "registry_mirror",
+    "hosts": [
+      "registry_mirror"
+    ]
+  },
+  {
+    "name": "ca",
+    "hosts": [
+      "ca"
+    ]
+  },
+  {
+    "name": "nextcloud",
+    "hosts": [
+      "nc"
+    ]
+  },
+  {
+    "name": "elastic",
+    "hosts": [
+      "elastic"
+    ]
+  },
+  {
+    "name": "kibana",
+    "hosts": [
+      "kibana"
+    ]
+  },
+  {
+    "name": "diagrams",
+    "hosts": [
+      "diagrams"
+    ]
+  },
+  {
+    "name": "nagios",
+    "hosts": [
+      "nagios"
+    ]
+  },
+  {
+    "name": "prometheus",
+    "hosts": [
+      "prometheus"
+    ]
+  },
+  {
+    "name": "vscode",
+    "hosts": [
+      "vscode"
+    ]
+  },
+  {
+    "name": "calibre",
+    "hosts": [
+      "calibre"
+    ]
+  },
+  {
+    "name": "mineos",
+    "hosts": [
+      "mineos"
+    ]
+  },
+  {
+    "name": "scratch",
+    "hosts": [
+      "scratch"
+    ]
+  },
+  {
+    "name": "prometheusblackbox",
+    "hosts": [
+      "prometheusblackbox"
+    ]
+  },
+  {
+    "name": "ingress",
+    "hosts": [
+      "ingress"
+    ]
+  },
+  {
+    "name": "transmission_temp",
+    "hosts": [
+      "transmission_temp"
+    ]
+  },
+  {
+    "name": "transmission_persist",
+    "hosts": [
+      "transmission_persist"
+    ]
+  },
+  {
+    "name": "vault",
+    "hosts": [
+      "vault"
+    ]
+  },
+  {
+    "name": "homer",
+    "hosts": [
+      "homer"
+    ]
+  },
+  {
+    "name": "alertmanager",
+    "hosts": [
+      "alertmanager"
+    ]
+  },
+  {
+    "name": "pushgateway",
+    "hosts": [
+      "pushgateway"
+    ]
+  }
+]

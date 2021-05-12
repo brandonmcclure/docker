@@ -28,6 +28,7 @@ services:
       dockerfile: Dockerfile
     restart: ${RESTART_POLICY}
     volumes:
+      - ./mountPoints/certgetter/certrequests.json:/mnt/certrequests.json:ro
       - registry_certs:/mnt/registry_certs:rw
       - grafana_certs:/mnt/grafana_certs:rw
       - ca_certs:/mnt/ca_certs:rw

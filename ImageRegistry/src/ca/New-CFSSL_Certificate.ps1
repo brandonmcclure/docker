@@ -1,31 +1,6 @@
 param(
 	$dev_bindings = $true,
-	$certRequests = @(
-		[PSCustomObject]@{name = 'registry'; hosts = @('ImageRegistry')}
-		,[PSCustomObject]@{name = 'grafana'; hosts = @('grafana')}
-		,[PSCustomObject]@{name = 'squid'; hosts = @('proxy'); uid = '200'; gid = '200'; signingProfile = "any"}
-		,[PSCustomObject]@{name = 'registryui'; hosts = @('ImageRegistry','registry');}
-		,[PSCustomObject]@{name = 'registry_mirror'; hosts = @('registry_mirror');}
-		,[PSCustomObject]@{name = 'ca'; hosts = @('ca');}
-		,[PSCustomObject]@{name = 'nextcloud'; hosts = @('nc');}
-		,[PSCustomObject]@{name = 'elastic'; hosts = @('elastic');}
-		,[PSCustomObject]@{name = 'kibana'; hosts = @('kibana');}
-		,[PSCustomObject]@{name = 'diagrams'; hosts = @('diagrams');}
-		,[PSCustomObject]@{name = 'nagios'; hosts = @('nagios');}
-		,[PSCustomObject]@{name = 'prometheus'; hosts = @('prometheus');}
-		,[PSCustomObject]@{name = 'vscode'; hosts = @('vscode');}
-		,[PSCustomObject]@{name = 'calibre'; hosts = @('calibre');}
-		,[PSCustomObject]@{name = 'mineos'; hosts = @('mineos');}
-		,[PSCustomObject]@{name = 'scratch'; hosts = @('scratch');}
-		,[PSCustomObject]@{name = 'prometheusblackbox'; hosts = @('prometheusblackbox');}
-		,[PSCustomObject]@{name = 'ingress'; hosts = @('ingress');}
-		,[PSCustomObject]@{name = 'transmission_temp'; hosts = @('transmission_temp');}
-		,[PSCustomObject]@{name = 'transmission_persist'; hosts = @('transmission_persist');}
-		,[PSCustomObject]@{name = 'vault'; hosts = @('vault');}
-		,[PSCustomObject]@{name = 'homer'; hosts = @('homer');}
-		[PSCustomObject]@{name = 'alertmanager'; hosts = @('alertmanager');}
-		[PSCustomObject]@{name = 'pushgateway'; hosts = @('pushgateway');}
-	),
+	$certRequestsPath = "/mnt/certrequests.json",
 	$Country = "US",
 	$State = "Colorado",
 	$Location = "Denver",
@@ -35,6 +10,7 @@ param(
 	$certOutPath = '/mnt',
 	$domainName = '.mcd.com' # Will be suffixed onto each host
 )
+$certRequests = Get-Content $certRequestsPath | ConvertFrom-Json
 $newRequests =@()
 foreach($certRequestIndex in 0..$(($certRequests | measure-object | select -ExpandProperty Count)-1)){
 	if([string]::IsNullOrEmpty($certRequestIndex.signingProfile)){
