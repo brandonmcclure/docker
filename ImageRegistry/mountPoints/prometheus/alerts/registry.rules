@@ -1,0 +1,11 @@
+groups:
+- name: Hardware alerts
+  rules:
+  - alert: registry down
+    expr: up{job="registry"} == 0
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      title: Registry {{ $labels.instance }} is down
+      description: Failed to scrape {{ $labels.job }} on {{ $labels.instance }} for more than 3 minutes. Registry seems down.

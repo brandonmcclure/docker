@@ -5,24 +5,31 @@ else
 endif
 .SHELLFLAGS := -NoProfile -Command 
 
-CORE_SERVICES := dns certgetter ca ingress ingress_prom_exporter vault
-BACKUP := registry_backup
-REGISTRY := registry registryui registry_mirror
-MONITORING := grafana prometheus nagios nagios_mysql prometheusblackbox homer
-ELASTIC := es01 es02 es03 kib01 logstash
-PROXY := squidproxy squidmetrics
-MISC := youtube_dl scratch diagrams.net vscode calibre
-NEXTCLOUD := app db
-ALL_SERVICES := ${CORE_SERVICES} ${MONITORING} ${PROXY} ${BACKUP} ${MISC} ${ELASTIC} ${NEXTCLOUD}
+CORE_SERVICES := ${NOOP} dns certgetter ca ingress ingress_prom_exporter vault
+BACKUP := ${NOOP} registry_backup
+REGISTRY := ${NOOP} registry registryui registry_mirror
+MONITORING := ${NOOP} grafana prometheus nagios nagios_mysql prometheusblackbox homer influxdb alertmanager pushgateway
+ELASTIC := ${NOOP} es01 es02 es03 kib01 logstash
+PROXY := ${NOOP} squidproxy squidmetrics
+MISC := ${NOOP} youtube_dl scratch diagrams.net vscode calibre
+NEXTCLOUD := ${NOOP} app db
+ALL_SERVICES := ${NOOP}${CORE_SERVICES}${MONITORING}${PROXY}${BACKUP}${MISC}${ELASTIC}${NEXTCLOUD}
 
-COMPOSE_ALL_FILES := -f docker-compose.yml ${COMPOSE_REGISTRY_FILES} ${COMPOSE_MONITORING_FILES} ${COMPOSE_PROXY_FILES} ${COMPOSE_MISC_FILES} ${COMPOSE_NEXTCLOUD_FILES} ${COMPOSE_ELASTIC_FILES}
-COMPOSE_MONITORING_FILES := -f docker-compose.monitoring.yml
-COMPOSE_PROXY_FILES := -f docker-compose.proxy.yml
-COMPOSE_REGISTRY_FILES := -f docker-compose.registry.yml
-COMPOSE_MISC_FILES := -f docker-compose.misc.yml
-CORE_SERVICES_FILES := -f docker-compose.yml
-COMPOSE_ELASTIC_FILES := -f docker-compose.elastic.yml
-COMPOSE_NEXTCLOUD_FILES := -f docker-compose.nextcloud.yml
+
+COMPOSE_MONITORING_FILES := ${NOOP} docker-compose.monitoring.yml
+COMPOSE_PROXY_FILES := ${NOOP} docker-compose.proxy.yml
+COMPOSE_REGISTRY_FILES := ${NOOP} docker-compose.registry.yml
+COMPOSE_MISC_FILES := ${NOOP} docker-compose.misc.yml
+CORE_SERVICES_FILES := ${NOOP} docker-compose.yml
+COMPOSE_ELASTIC_FILES := ${NOOP} docker-compose.elastic.yml
+COMPOSE_NEXTCLOUD_FILES := ${NOOP} docker-compose.nextcloud.yml
+COMPOSE_ALL_FILES := ${NOOP}${CORE_SERVICES_FILES}${COMPOSE_REGISTRY_FILES}${COMPOSE_MONITORING_FILES}${COMPOSE_PROXY_FILES}${COMPOSE_MISC_FILES}${COMPOSE_NEXTCLOUD_FILES}${COMPOSE_ELASTIC_FILES}
+# -------------------------
+classpathify = $(subst $(eval) ,:,$($1))
+
+SWARM_FILE_JOINED_SYNTAX = $(subst $(eval) , -c .\,$1)
+SWARM_SERVICES_JOINED_SYNTAX = $(subst $(eval) , $1,$2)
+COMPOSE_FILE_JOINED_SYNTAX = $(subst $(eval) , -f ,${COMPOSE_ALL_FILES})
 # --------------------------
 
 
@@ -31,51 +38,57 @@ setup:
 	@./Configure.ps1
 
 build:
-	@docker-compose ${COMPOSE_ALL_FILES} up -d --build ${ALL_SERVICES}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_REGISTRY_FILES}}${COMPOSE_FILE_JOINED_SYNTAX} up -d --build ${ALL_SERVICES}
 
 monitoring:
-	@docker-compose ${COMPOSE_MONITORING_FILES} up -d --build ${MONITORING}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_MONITORING_FILES}} up -d --build ${MONITORING}
 
 proxy:
-	@docker-compose ${COMPOSE_PROXY_FILES} up -d --build ${PROXY}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_PROXY_FILES}}${COMPOSE_PROXY_FILES} up -d --build ${PROXY}
 
 nextcloud:
-	@docker-compose ${COMPOSE_NEXTCLOUD_FILES} up -d --build ${NEXTCLOUD}
-
-gitlab:
-	@docker-compose ${COMPOSE_NEXTCLOUD_FILES} up -d --build ${NEXTCLOUD}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_NEXTCLOUD_FILES}}${COMPOSE_NEXTCLOUD_FILES} up -d --build ${NEXTCLOUD}
 
 registry: core
-	@docker-compose ${COMPOSE_REGISTRY_FILES} up -d --build ${REGISTRY}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_REGISTRY_FILES}} up -d --build ${REGISTRY}
 
 core:
-	@docker-compose ${CORE_SERVICES_FILES} up -d --build ${CORE_SERVICES}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${CORE_SERVICES_FILES}} up -d --build ${CORE_SERVICES}
 elastic:
-	@docker-compose ${COMPOSE_ELASTIC_FILES} up -d --build ${ELASTIC}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ELASTIC_FILES}} up -d --build ${ELASTIC}
 misc:
-	@docker-compose ${COMPOSE_MISC_FILES} up -d --build ${MISC_SERVICES}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_MISC_FILES}} up -d --build ${MISC_SERVICES}
 
 down:		
-	@docker-compose ${COMPOSE_ALL_FILES} down
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} down
 
 stop:		
-	@docker-compose ${COMPOSE_ALL_FILES} stop ${ALL_SERVICES}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} stop ${ALL_SERVICES}
 	
 restart:	
-	@docker-compose ${COMPOSE_ALL_FILES} restart ${ALL_SERVICES}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} restart ${ALL_SERVICES}
 
 rm:				
-	@docker-compose $(COMPOSE_ALL_FILES) rm -f ${ALL_SERVICES}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} rm -f ${ALL_SERVICES}
 
 logs:	
-	@docker-compose $(COMPOSE_ALL_FILES) logs --follow --tail=1000 ${ALL_SERVICES}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} logs --follow --tail=1000 ${ALL_SERVICES}
 
 images:		
-	@docker-compose $(COMPOSE_ALL_FILES) images ${ALL_SERVICES}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} images ${ALL_SERVICES}
 
 clean: ## Remove all Containers and Delete Volume Data
-	-docker-compose ${COMPOSE_ALL_FILES} down -v --remove-orphans
+	-docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} down -v --remove-orphans
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,core_,${CORE_SERVICES}}
 
+deploy_core:
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${CORE_SERVICES_FILES}} core
+#echo ${COMPOSE_MONITORING_FILES}
+#echo ${COMPOSE_ALL_FILES}
+##echo $(subst $(eval) , -f ,$(ALL_SERVICES))
+
+services:
+	docker service logs
 .PHONY: test
 test:
 	@$return = Start-MyProcess "docker-compose" "--project-name test ${COMPOSE_ALL_FILES} up -d"; if ([string]::IsNullOrEmpty($return.stderr) -or $return.stdoutt -like '*Authorization*'){Write-Error "There was an error" -ErrorAction Stop}

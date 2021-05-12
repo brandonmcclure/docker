@@ -16,6 +16,8 @@
         {"Name":"grafana","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"3000","upstreamScheme":"https"},
 		{"Name":"prometheus","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"9090"},
 		{"Name":"prometheusblackbox","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"9090"},
+		{"Name":"alertmanager","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"9093","Authentication":"basic"},
+		{"Name":"pushgateway","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"9091","Authentication":"basic"},
 		{"Name":"elastic","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"9200","upstreamService":"es01"},
 		{"Name":"kibana","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"5601","upstreamService":"kib01"},
         {"Name":"flatcarMirror","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost"},
