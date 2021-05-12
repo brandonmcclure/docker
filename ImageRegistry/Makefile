@@ -8,7 +8,7 @@ endif
 CORE_SERVICES := ${NOOP} dns certgetter ca ingress ingress_prom_exporter vault
 BACKUP := ${NOOP} registry_backup
 REGISTRY := ${NOOP} registry registryui registry_mirror
-MONITORING := ${NOOP} grafana prometheus nagios nagios_mysql prometheusblackbox homer influxdb alertmanager pushgateway
+MONITORING := ${NOOP} grafana prometheus nagios nagios_mysql prometheusblackbox homer alertmanager pushgateway
 ELASTIC := ${NOOP} es01 es02 es03 kib01 logstash
 PROXY := ${NOOP} squidproxy squidmetrics
 MISC := ${NOOP} youtube_dl scratch diagrams.net vscode calibre
@@ -29,7 +29,7 @@ classpathify = $(subst $(eval) ,:,$($1))
 
 SWARM_FILE_JOINED_SYNTAX = $(subst $(eval) , -c .\,$1)
 SWARM_SERVICES_JOINED_SYNTAX = $(subst $(eval) , $1,$2)
-COMPOSE_FILE_JOINED_SYNTAX = $(subst $(eval) , -f ,${COMPOSE_ALL_FILES})
+COMPOSE_FILE_JOINED_SYNTAX = $(subst $(eval) , -f ,$1)
 # --------------------------
 
 
@@ -54,10 +54,12 @@ registry: core
 
 core:
 	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${CORE_SERVICES_FILES}} up -d --build ${CORE_SERVICES}
+
 elastic:
 	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ELASTIC_FILES}} up -d --build ${ELASTIC}
+
 misc:
-	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_MISC_FILES}} up -d --build ${MISC_SERVICES}
+	docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_MISC_FILES}} up -d --build ${MISC_SERVICES}
 
 down:		
 	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} down
