@@ -7,7 +7,7 @@ param(
 	$caURL = 'http://ca:8888',
 	$ca_basicaauth_Username = '',
 	$ca_basicaauth_Password = '',
-	$certOutPath = '/mnt',
+	$certOutPath = '/mnt/cfssl_certs',
 	$domainName = '.mcd.com' # Will be suffixed onto each host
 )
 $certRequests = Get-Content $certRequestsPath | ConvertFrom-Json
@@ -106,14 +106,17 @@ foreach ($request in $certRequests){
 	$result.result.certificate | Out-File cert.crt
 
 	Get-ChildItem /work
-	Copy-Item -Path /work/cert.crt -Destination $certOutPath/$($request.name)_certs/cert.crt
-	Copy-Item -Path /work/cert.key -Destination $certOutPath/$($request.name)_certs/cert.key 
+	if (-not (Test-Path "$certOutPath/$($request.name)/")){
+		New-Item -Path "$certOutPath/$($request.name)/" -ItemType Directory -force
+	}
+	Copy-Item -Path /work/cert.crt -Destination $certOutPath/$($request.name)/cert.crt
+	Copy-Item -Path /work/cert.key -Destination $certOutPath/$($request.name)/cert.key 
 
 	if (-not [string]::IsNullOrEmpty($request.uid) -and -not [string]::IsNullOrEmpty($request.gid)){
 		Write-Host "Setting the UID:GID ownership"
-		chown $($request.uid):$($request.gid) $certOutPath/$($request.name)_certs/cert.crt
+		chown $($request.uid):$($request.gid) $certOutPath/$($request.name)/cert.crt
 		chmod 444 $certOutPath/$($request.name)_certs/cert.crt
-		chown $($request.uid):$($request.gid) $certOutPath/$($request.name)_certs/cert.key
+		chown $($request.uid):$($request.gid) $certOutPath/$($request.name)/cert.key
 		chmod 444 $certOutPath/$($request.name)_certs/cert.key
 	}
 }

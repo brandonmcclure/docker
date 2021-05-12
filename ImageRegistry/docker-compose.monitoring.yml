@@ -19,7 +19,6 @@ services:
       - ./mountPoints/grafana/grafana.ini:/etc/grafana/grafana.ini
       - grafana_home:/usr/share/grafana
       - grafana_logs:/var/log/grafana
-      - grafana_certs:/mnt/certs
     restart: ${RESTART_POLICY}
   prometheus:
     depends_on:

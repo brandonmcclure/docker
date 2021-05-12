@@ -90,8 +90,8 @@ foreach($record in $config.Records){
 		$outConfig += "
 $SnippetHttpToHttpsRedirect
 server {
-	ssl_certificate /etc/nginx/conf.d/$($record.Name)/cert.crt;
-	 ssl_certificate_key /etc/nginx/conf.d/$($record.Name)/cert.key;
+	ssl_certificate /etc/nginx/conf.d/certs/$($record.Name)/cert.crt;
+	 ssl_certificate_key /etc/nginx/conf.d/certs/$($record.Name)/cert.key;
 	ssl_session_timeout  5m;
 	ssl_protocols        TLSv1 TLSv1.1 TLSv1.2;
 	ssl_ciphers          ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+EXP;
@@ -136,8 +136,8 @@ $SnippetHttpToHttpsRedirect
 server {
 	auth_basic           `"Administrator's Area`";
 	auth_basic_user_file /etc/nginx/basicAuth/$($record.Name).htpasswd;
-	ssl_certificate /etc/nginx/conf.d/$($record.Name)/cert.crt;
-	 ssl_certificate_key /etc/nginx/conf.d/$($record.Name)/cert.key;
+	ssl_certificate /etc/nginx/conf.d/certs/$($record.Name)/cert.crt;
+	 ssl_certificate_key /etc/nginx/conf.d/certs/$($record.Name)/cert.key;
 	ssl_session_timeout  5m;
 	ssl_protocols        TLSv1 TLSv1.1 TLSv1.2;
 	ssl_ciphers          ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+EXP;
