@@ -20,35 +20,41 @@ services:
       - grafana_home:/usr/share/grafana
       - grafana_logs:/var/log/grafana
     restart: ${RESTART_POLICY}
+    networks:
+      - overlay
   prometheus:
     depends_on:
       - grafana
-    build:
-        context: ./src/prometheus
-        dockerfile: Dockerfile
+    image: registry.example.com/bmcclure89/prometheus:v2.26.0
     volumes:
      - ./mountPoints/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
      - ./mountPoints/prometheus/alerts:/etc/prometheus/alerts
      - ./mountPoints/prometheus/ca/dhha_ca.crt:/mnt/ca/dhha_ca.crt
     restart: ${RESTART_POLICY}
+    networks:
+      - overlay
   alertmanager:
     depends_on:
         - prometheus
     image: quay.io/prometheus/alertmanager
     restart: ${RESTART_POLICY}
+    networks:
+      - overlay
   pushgateway:
     depends_on:
         - prometheus
     image: prom/pushgateway
     restart: ${RESTART_POLICY} 
+    networks:
+      - overlay
   prometheusblackbox:
-    build: 
-        context: ./src/prometheusblackbox
-        dockerfile: Dockerfile
+    image: registry.example.com/bmcclure89/prometheusblackbox:master
     volumes:
       - ./mountPoints/prometheus/blackbox.yml:/config/blackbox.yml
     command: "--config.file=/config/blackbox.yml"
     restart: ${RESTART_POLICY}
+    networks:
+      - overlay
   nagios:
     image: ethnchao/nagios
     container_name: nagios
@@ -67,6 +73,8 @@ services:
       - ./mountPoints/nagios/plugin:/data/plugin
       - ./mountPoints/nagios/conf:/usr/local/nagios/etc/mount
       - ./mountPoints/nagios/example:/data/example
+    networks:
+      - overlay
   nagios_mysql:
     image: mysql:5.6
     container_name: mysql
@@ -84,7 +92,9 @@ services:
       - MYSQL_DATABASE=nagios
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
     volumes:
-      - ./mountPoints/nagios/db:/var/lib/mysql
+      - nagios_mysql_data:/var/lib/mysql
+    networks:
+      - overlay
   homer:
     image: b4bz/homer:21.03.2
     volumes:
@@ -92,19 +102,18 @@ services:
     environment:
       - UID=1000
       - GID=1000
+    networks:
+      - overlay
 volumes:
   registry_data:
-  registry_certs:
-  registry_requested_certs:
   registry_auth:
   grafana_data:
   grafana_plugins:
+  grafana_logs:
   grafana_provisiong:
   grafana_home:
-  grafana_logs:
-  grafana_certs:
   squid_cache:
   squid_log:
-  squid_certs:
-  ca_reverseproxy_certs:
-  registryui_reverseproxy_certs:
+  nagios_mysql_data:
+networks:
+    overlay:

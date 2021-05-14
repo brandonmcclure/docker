@@ -5,17 +5,19 @@ else
 endif
 .SHELLFLAGS := -NoProfile -Command 
 
+# -- Define your services that live in your compose files --#
 CORE_SERVICES := ${NOOP} dns certgetter ca ingress ingress_prom_exporter vault
 BACKUP := ${NOOP} registry_backup
 REGISTRY := ${NOOP} registry registryui registry_mirror
-MONITORING := ${NOOP} grafana prometheus nagios nagios_mysql prometheusblackbox homer alertmanager pushgateway
+MONITORING := ${NOOP} grafana prometheus nagios nagios_mysql prometheusblackbox homer alertmanager pushgateway squidmetrics
 ELASTIC := ${NOOP} es01 es02 es03 kib01 logstash
 PROXY := ${NOOP} squidproxy squidmetrics
 MISC := ${NOOP} youtube_dl scratch diagrams.net vscode calibre
 NEXTCLOUD := ${NOOP} app db
 ALL_SERVICES := ${NOOP}${CORE_SERVICES}${MONITORING}${PROXY}${BACKUP}${MISC}${ELASTIC}${NEXTCLOUD}
+# -------------------------
 
-
+# -- Define the yml files -- #
 COMPOSE_MONITORING_FILES := ${NOOP} docker-compose.monitoring.yml
 COMPOSE_PROXY_FILES := ${NOOP} docker-compose.proxy.yml
 COMPOSE_REGISTRY_FILES := ${NOOP} docker-compose.registry.yml
@@ -25,6 +27,8 @@ COMPOSE_ELASTIC_FILES := ${NOOP} docker-compose.elastic.yml
 COMPOSE_NEXTCLOUD_FILES := ${NOOP} docker-compose.nextcloud.yml
 COMPOSE_ALL_FILES := ${NOOP}${CORE_SERVICES_FILES}${COMPOSE_REGISTRY_FILES}${COMPOSE_MONITORING_FILES}${COMPOSE_PROXY_FILES}${COMPOSE_MISC_FILES}${COMPOSE_NEXTCLOUD_FILES}${COMPOSE_ELASTIC_FILES}
 # -------------------------
+
+# -- Functions to help the makefile work for docker compose and docker deploy -- #
 classpathify = $(subst $(eval) ,:,$($1))
 
 SWARM_FILE_JOINED_SYNTAX = $(subst $(eval) , -c .\,$1)
@@ -34,6 +38,12 @@ COMPOSE_FILE_JOINED_SYNTAX = $(subst $(eval) , -f ,$1)
 
 
 all: down core registry monitoring elastic
+
+build_src:
+	$(MAKE) -C src/certgetter/.
+	$(MAKE) -C src/prometheus/.
+	$(MAKE) -C src/prometheusblackbox/.
+
 setup:
 	@./Configure.ps1
 
@@ -82,12 +92,13 @@ images:
 clean: ## Remove all Containers and Delete Volume Data
 	-docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} down -v --remove-orphans
 	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,core_,${CORE_SERVICES}}
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,monitoring_,${MONITORING}}
 
 deploy_core:
 	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${CORE_SERVICES_FILES}} core
-#echo ${COMPOSE_MONITORING_FILES}
-#echo ${COMPOSE_ALL_FILES}
-##echo $(subst $(eval) , -f ,$(ALL_SERVICES))
+
+deploy_monitoring:
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MONITORING_FILES}} monitoring
 
 services:
 	docker service logs

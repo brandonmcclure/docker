@@ -1,29 +1,33 @@
-version: '2.2'
+version: '3.5'
 
 services:
   diagrams:
     image: "jgraph/drawio"
-    container_name: diagrams
     restart: always
     ports:
       - 7124:8080 
+    networks:
+      - overlay
   scratch:
     image: "leejoneshane/docker-scratch3"
-    container_name: scratch3
     restart: always
+    networks:
+      - overlay
   barcodegenerator:
     image: "padiazg/barcode-generator"
     restart: always
+    networks:
+      - overlay
   vscode:
     image: ghcr.io/linuxserver/code-server
     env_file: vscode.env
-    container_name: vscode
     restart: always
     ports:
       - 7126:8443
+    networks:
+      - overlay
   calibre:
     image: ghcr.io/linuxserver/calibre
-    container_name: calibre
     environment:
       - PUID=1000
       - PGID=1000
@@ -32,6 +36,7 @@ services:
       - 7127:8080
       - 7128:8081
     restart: unless-stopped
+    networks:
+      - overlay
 networks:
-  default:
-    driver: bridge
+  overlay:
