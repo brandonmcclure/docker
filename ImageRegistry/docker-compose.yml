@@ -19,6 +19,8 @@ services:
       start_period: 10s
     env_file: ca.env
     entrypoint: ["cfssl", "serve", "-ca", "/ca/docker.crt", "-ca-key", "/ca/docker.key", "-ca-bundle", "/ca/ca-bundle.crt", "-address", "0.0.0.0", "-loglevel", "0"] #, "-config", "/ca/config.json"]
+    networks:
+      - overlay
   certgetter:
     depends_on:
       - ca
@@ -37,6 +39,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    networks:
+      - overlay
   dns: 
     image: coredns/coredns
     ports:
@@ -48,6 +52,8 @@ services:
     command: -conf /root/Corefile
     env_file: ca.env
     restart: ${RESTART_POLICY}
+    networks:
+      - overlay
   ingress:
     image: nginx:1.19-alpine
     ports:
@@ -58,10 +64,14 @@ services:
       - ./mountPoints/ingress/nginx.conf:/etc/nginx/nginx.conf
       - cfssl_certs:/etc/nginx/conf.d/certs:ro
     restart: ${RESTART_POLICY}
+    networks:
+      - overlay
   ingress_prom_exporter:
     image: nginx/nginx-prometheus-exporter:0.9.0
     command: -nginx.scrape-uri=http://ingress:80/stub_status
     restart: ${RESTART_POLICY}
+    networks:
+      - overlay
   vault:
       image: vault
       container_name: vault
@@ -72,6 +82,8 @@ services:
         - IPC_LOCK
       entrypoint: vault server -config=/vault/config/vault.json
       restart: ${RESTART_POLICY}
+      networks:
+        - overlay
 volumes:
   cfssl_certs:
   registry_auth:
@@ -84,3 +96,5 @@ volumes:
   squid_cache:
   squid_log:
   dhcp_leases:
+networks:
+    overlay:
