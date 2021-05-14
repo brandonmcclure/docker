@@ -7,3 +7,11 @@
 /ImageRegistry/mountPoints/nagios/db
 /ImageRegistry/mountPoints/nextcloud/data
 *.gz
+/ImageRegistry/mountPoints/certgetter/certrequests.json
+/ImageRegistry/config/config.json
+/ImageRegistry/mountPoints/coredns
+*.htpasswd
+/ImageRegistry/mountPoints/registryUI/config.yml
+/ImageRegistry/mountPoints/ingress/nginx.conf
+/ImageRegistry/mountPoints/registry/config.yml
+/ImageRegistry/mountPoints/registryMirror/config.yml
