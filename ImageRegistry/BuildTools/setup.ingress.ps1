@@ -3,8 +3,12 @@ param($config,$domain = '',[switch] $DisableIngressStub,[int] $dnsTimeout = 5)
 
 function CreateHtpasswd{
 	param($serviceName, $htpasswordPath)
+
+	if(-not (Test-Path (Split-Path $htpasswordPath -Parent))){
+		New-Item (Split-Path $htpasswordPath -Parent) -ItemType Directory -Force
+	}
 	$creds = Get-Credential -Message "Enter the credentials for the $($serviceName) basic auth"
-		(docker run --rm -it -v ${PWD}:/work bmcclure89/docker-htpassword $($creds.Username) $($creds.GetNetworkCredential().Password)) | Add-Content "$htpasswordPath"
+		(docker run --rm -it -v ${PWD}:/work bmcclure89/docker-htpasswd $($creds.Username) $($creds.GetNetworkCredential().Password)) | Add-Content "$htpasswordPath"
 }
 $outConfig = "events {
     use           epoll;

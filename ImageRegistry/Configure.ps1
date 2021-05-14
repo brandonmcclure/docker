@@ -3,7 +3,7 @@
 param($RESTART_POLICY = 'always',
 $registryBasicAuthUsername = 'basicAuth',
 [securestring]$registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
-$REGISTRY_UI_URL = 'https://Registry.mcd.com:5000',
+$REGISTRY_UI_URL = 'https://Registry.example.com',
 $REGISTRY_UI_VERIFY_TLS = 'false'
 ,$SQUID_HOSTNAME = '',
 $caBasicAuthUsername = 'basicAuth',
