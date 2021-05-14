@@ -13,7 +13,7 @@
         {"Name":"registry","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"5000","Authentication":"basic"},
 		{"Name":"registryui","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"8000"},
         {"Name":"gateway","ZoneClass":"IN","RecordType":"A","IpAddress":"192.168.0.1"},
-        {"Name":"grafana","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"3000","upstreamScheme":"https"},
+        {"Name":"grafana","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"3000"},
 		{"Name":"prometheus","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"9090"},
 		{"Name":"prometheusblackbox","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"9090"},
 		{"Name":"alertmanager","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"9093","Authentication":"basic"},
@@ -30,6 +30,7 @@
 		{"Name":"vscode","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"7126"},
 		{"Name":"calibre","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"7123"},
 		{"Name":"homer","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"8080"},
+		{"Name":"virusscan","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"8888","upstreamService":"virusscan_ui"},
 		{"Name":"barcodegenerator","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"3000"}
     ]
 }

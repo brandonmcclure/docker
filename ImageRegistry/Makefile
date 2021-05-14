@@ -13,6 +13,7 @@ MONITORING := ${NOOP} grafana prometheus nagios nagios_mysql prometheusblackbox 
 ELASTIC := ${NOOP} es01 es02 es03 kib01 logstash
 PROXY := ${NOOP} squidproxy squidmetrics
 MISC := ${NOOP} youtube_dl scratch diagrams.net vscode calibre
+VIRUS := ${NOOP} redis mongodb consul virusscan_ui api dummy-scanner clamav-scanner windows-defender-scanner
 NEXTCLOUD := ${NOOP} app db
 ALL_SERVICES := ${NOOP}${CORE_SERVICES}${MONITORING}${PROXY}${BACKUP}${MISC}${ELASTIC}${NEXTCLOUD}
 # -------------------------
@@ -25,7 +26,8 @@ COMPOSE_MISC_FILES := ${NOOP} docker-compose.misc.yml
 CORE_SERVICES_FILES := ${NOOP} docker-compose.yml
 COMPOSE_ELASTIC_FILES := ${NOOP} docker-compose.elastic.yml
 COMPOSE_NEXTCLOUD_FILES := ${NOOP} docker-compose.nextcloud.yml
-COMPOSE_ALL_FILES := ${NOOP}${CORE_SERVICES_FILES}${COMPOSE_REGISTRY_FILES}${COMPOSE_MONITORING_FILES}${COMPOSE_PROXY_FILES}${COMPOSE_MISC_FILES}${COMPOSE_NEXTCLOUD_FILES}${COMPOSE_ELASTIC_FILES}
+COMPOSE_VIRUS_FILES := ${NOOP} docker-compose.virusscan.yml
+COMPOSE_ALL_FILES := ${NOOP}${CORE_SERVICES_FILES}${COMPOSE_REGISTRY_FILES}${COMPOSE_MONITORING_FILES}${COMPOSE_PROXY_FILES}${COMPOSE_MISC_FILES}${COMPOSE_NEXTCLOUD_FILES}${COMPOSE_ELASTIC_FILES}${COMPOSE_VIRUS_FILES}
 # -------------------------
 
 # -- Functions to help the makefile work for docker compose and docker deploy -- #
@@ -54,10 +56,13 @@ monitoring:
 	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_MONITORING_FILES}} up -d --build ${MONITORING}
 
 proxy:
-	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_PROXY_FILES}}${COMPOSE_PROXY_FILES} up -d --build ${PROXY}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_PROXY_FILES}} up -d --build ${PROXY}
 
 nextcloud:
-	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_NEXTCLOUD_FILES}}${COMPOSE_NEXTCLOUD_FILES} up -d --build ${NEXTCLOUD}
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_NEXTCLOUD_FILES}} up -d --build ${NEXTCLOUD}
+
+virus:
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_VIRUS_FILES}} up -d --build ${VIRUS}
 
 registry: core
 	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_REGISTRY_FILES}} up -d --build ${REGISTRY}
@@ -93,12 +98,17 @@ clean: ## Remove all Containers and Delete Volume Data
 	-docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} down -v --remove-orphans
 	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,core_,${CORE_SERVICES}}
 	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,monitoring_,${MONITORING}}
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,misc_,${MISC}}
+	-docker network prune -f
 
 deploy_core:
 	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${CORE_SERVICES_FILES}} core
 
 deploy_monitoring:
 	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MONITORING_FILES}} monitoring
+
+deploy_misc:
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MISC_FILES}} misc
 
 services:
 	docker service logs

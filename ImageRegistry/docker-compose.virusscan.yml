@@ -1,0 +1,90 @@
+version: "3.3"
+
+services:
+  redis:
+    image: redis:6
+    restart: on-failure
+    volumes:
+    - redis:/data
+   
+  mongodb:
+    image: mongo:4
+    restart: on-failure
+    volumes:
+      - mongodb:/data
+      
+  # See https://github.com/hashicorp/consul/blob/master/demo/docker-compose-cluster/docker-compose.yml
+  # for a production-ready config.
+  consul:
+    image: consul:1.8
+    restart: on-failure
+    command: consul agent -dev -log-level=info -client=0.0.0.0
+        
+  virusscan_ui:
+    image: mindcollapse/malware-multi-scan-ui
+    restart: on-failure
+    depends_on:
+      - api
+    environment:
+      - "API_URL=http://api:5000"
+      - "NUXT_HOST=0.0.0.0"
+      - "NUXT_PORT=8888"
+    # build:
+    #   context: MalwareMultiScan.Ui
+    #   dockerfile: Dockerfile
+
+  api:
+    image: mindcollapse/malware-multi-scan-api
+    restart: on-failure
+    depends_on:
+      - consul
+      - redis
+      - mongodb
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+      - "MONGO_ADDRESS=mongodb://mongodb:27017?connectTimeoutMS=120000"
+    # build:
+    #   context: .
+    #   dockerfile: MalwareMultiScan.Api/Dockerfile
+  
+  dummy-scanner:
+    image: mindcollapse/malware-multi-scan-scanner
+    restart: on-failure
+    depends_on:
+      - consul
+      - redis
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+    # build:
+    #   context: .
+    #   dockerfile: MalwareMultiScan.Scanner/Dockerfile
+  
+  clamav-scanner:
+    image: mindcollapse/malware-multi-scan-scanner-clamav
+    restart: on-failure
+    depends_on:
+      - dummy-scanner
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+    # build:
+    #   context: MalwareMultiScan.Backends/Dockerfiles
+    #   dockerfile: Clamav.Dockerfile
+      
+  windows-defender-scanner:
+    image: mindcollapse/malware-multi-scan-scanner-windows-defender
+    restart: on-failure
+    depends_on:
+      - dummy-scanner
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+    # build:
+    #   context: MalwareMultiScan.Backends/Dockerfiles
+    #   dockerfile: WindowsDefender.Dockerfile
+
+volumes:
+  mongodb:
+  redis:
