@@ -15,7 +15,9 @@ PROXY := ${NOOP} squidproxy squidmetrics
 MISC := ${NOOP} youtube_dl scratch diagrams.net vscode calibre
 VIRUS := ${NOOP} redis mongodb consul virusscan_ui api dummy-scanner clamav-scanner windows-defender-scanner
 NEXTCLOUD := ${NOOP} app db
-ALL_SERVICES := ${NOOP}${CORE_SERVICES}${MONITORING}${PROXY}${BACKUP}${MISC}${ELASTIC}${NEXTCLOUD}
+ANALYTICS := ${NOOP} metabase
+MINIO := ${NOOP} minio1
+ALL_SERVICES := ${NOOP}${CORE_SERVICES}${MONITORING}${PROXY}${BACKUP}${MISC}${ELASTIC}${NEXTCLOUD}${ANALYTICS}${MINIO}
 # -------------------------
 
 # -- Define the yml files -- #
@@ -27,7 +29,9 @@ CORE_SERVICES_FILES := ${NOOP} docker-compose.yml
 COMPOSE_ELASTIC_FILES := ${NOOP} docker-compose.elastic.yml
 COMPOSE_NEXTCLOUD_FILES := ${NOOP} docker-compose.nextcloud.yml
 COMPOSE_VIRUS_FILES := ${NOOP} docker-compose.virusscan.yml
-COMPOSE_ALL_FILES := ${NOOP}${CORE_SERVICES_FILES}${COMPOSE_REGISTRY_FILES}${COMPOSE_MONITORING_FILES}${COMPOSE_PROXY_FILES}${COMPOSE_MISC_FILES}${COMPOSE_NEXTCLOUD_FILES}${COMPOSE_ELASTIC_FILES}${COMPOSE_VIRUS_FILES}
+COMPOSE_ANALYTICS_FILES := ${NOOP} docker-compose.analytics.yml
+COMPOSE_MINIO_FILES := ${NOOP} docker-compose.minio.yml
+COMPOSE_ALL_FILES := ${NOOP}${CORE_SERVICES_FILES}${COMPOSE_REGISTRY_FILES}${COMPOSE_MONITORING_FILES}${COMPOSE_PROXY_FILES}${COMPOSE_MISC_FILES}${COMPOSE_NEXTCLOUD_FILES}${COMPOSE_ELASTIC_FILES}${COMPOSE_VIRUS_FILES}${COMPOSE_ANALYTICS_FILES}${COMPOSE_MINIO_FILES}
 # -------------------------
 
 # -- Functions to help the makefile work for docker compose and docker deploy -- #
@@ -63,6 +67,12 @@ nextcloud:
 
 virus:
 	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_VIRUS_FILES}} up -d --build ${VIRUS}
+
+minio:
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_MINIO_FILES}} up -d --build ${MINIO}
+
+analytics:
+	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ANALYTICS_FILES}} up -d --build ${ANALYTICS}
 
 registry: core
 	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_REGISTRY_FILES}} up -d --build ${REGISTRY}
