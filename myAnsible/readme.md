@@ -1,3 +1,6 @@
+# myAnsible
+This directory has playbooks and other files that I am using to explore using ansible pull mode
+
 # Install SSH key 
 Ideally you bake the key into the os image/ie the os is imutable and password ssh auth is disabled. If not, from windows wsl:
 
@@ -19,6 +22,7 @@ ansible -i hosts all -m ping
 ```
 ansible-galaxy install geerlingguy.ansible
 ansible-galaxy install geerlingguy.pip
+ansible-galaxy install andrewrothstein.powershell
 ```
 
 # Misc links/help

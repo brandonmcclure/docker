@@ -1,0 +1,8 @@
+---
+- name: Install PowerShell 7
+  hosts: all
+  remote_user: pi
+  become: yes
+  become_method: sudo
+  roles:
+    - role: andrewrothstein.powershell
