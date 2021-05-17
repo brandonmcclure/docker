@@ -1,0 +1,11 @@
+---
+- hosts: all
+  remote_user: pi
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  connection: ssh
+  tasks:
+    - name: Classify hosts depending on their OS distribution
+      debug:
+        msg: System {{ inventory_hostname }} OS is {{ ansible_facts['distribution'] }}

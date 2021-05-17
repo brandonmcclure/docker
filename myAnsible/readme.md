@@ -14,3 +14,14 @@ confirm that you can ssh into it with the key
 ```
 ansible -i hosts all -m ping
 ```
+
+# ansible-galaxy installs
+```
+ansible-galaxy install geerlingguy.ansible
+ansible-galaxy install geerlingguy.pip
+```
+
+# Misc links/help
+https://opensource.com/article/18/7/sysadmin-tasks-ansible
+
+## Where is a list of all the tasks I can use?

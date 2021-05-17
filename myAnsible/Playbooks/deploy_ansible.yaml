@@ -1,0 +1,12 @@
+- hosts: all
+  remote_user: pi
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  connection: ssh
+  vars:
+    ansible_install_method: pip
+    ansible_install_version_pip: "2.7.0"
+  roles:
+    - role: geerlingguy.pip
+    - role: geerlingguy.ansible
