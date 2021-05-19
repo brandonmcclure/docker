@@ -1,0 +1,11 @@
+services:
+    metabase:
+        image: metabase/metabase
+        networks:
+            - overlay
+        volumes:
+            - ./mountPoints/metabase:/metabase-data
+        environment: 
+            - MB_DB_FILE=/metabase-data/metabase.db
+networks:
+    overlay:

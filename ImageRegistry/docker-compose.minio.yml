@@ -1,0 +1,22 @@
+version: '3.5'
+
+services:
+    minio1:
+        image: minio/minio
+        volumes:
+            - ./mountPoints/minio1/data1:/data1
+            - ./mountPoints/minio1/data2:/data2
+            - ./mountPoints/minio1/data3:/data3
+            - ./mountPoints/minio1/data4:/data4
+            - ./mountPoints/minio1/data5:/data5
+            - ./mountPoints/minio1/data6:/data6
+            - ./mountPoints/minio1/data7:/data7
+            - ./mountPoints/minio1/data8:/data8
+        env_file: minio.env
+        ports: 
+            - "9000:9000"
+        command: server http://minio1/data{1...8}
+        networks:
+            - overlay
+networks:
+    overlay:
