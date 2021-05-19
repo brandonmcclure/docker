@@ -1,0 +1,9 @@
+- hosts: windows
+  gather_facts: no
+  tasks:
+  - win_chocolatey:
+      name: vlc
+      state: present
+  - win_updates:
+      category_names: CriticalUpdates
+      reboot: no
