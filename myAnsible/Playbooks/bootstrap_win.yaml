@@ -1,0 +1,15 @@
+- hosts: windows
+  gather_facts: False
+  vars_prompt:
+    - name: ansible_password
+      prompt: Enter the Ansible user password
+  tasks:
+    - name: Setup windows user
+      ansible.windows.win_user:
+        name: ansible
+        password: "{{ansible_password}}"
+        state: present
+        groups:
+          - Users
+          - Administrators
+      no_log: True
