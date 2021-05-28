@@ -1,4 +1,4 @@
-param($config,$domain = '',[switch] $DisableIngressStub,[int] $dnsTimeout = 5)
+param($config,$domain = '',[switch] $DisableIngressStub,[int] $dnsTimeout = 5, [switch]$dontGenneratehtpasswd)
 
 
 function CreateHtpasswd{
@@ -6,6 +6,10 @@ function CreateHtpasswd{
 	$creds = Get-Credential -Message "Enter the credentials for the $($serviceName) basic auth"
 		(docker run --rm -it -v ${PWD}:/work bmcclure89/docker-htpassword $($creds.Username) $($creds.GetNetworkCredential().Password)) | Add-Content "$htpasswordPath"
 }
+
+$authSnippet = ""
+$SnippetclientMaxBodySize=""
+
 $outConfig = "events {
     use           epoll;
     worker_connections  128;
@@ -84,31 +88,20 @@ foreach($record in $config.Records){
 			"
 		}
 	}
+
+	if( [bool]($record.PSobject.Properties.name -match "client_max_body_size")){
+		$SnippetclientMaxBodySize = "client_max_body_size $($record.client_max_body_size);"
+	}
+	 
+
 	if(-not [bool]($record.PSobject.Properties.name -match "Authentication")){
 		
 		
-		$outConfig += "
-$SnippetHttpToHttpsRedirect
-server {
-	ssl_certificate /etc/nginx/conf.d/certs/$($record.Name)/cert.crt;
-	 ssl_certificate_key /etc/nginx/conf.d/certs/$($record.Name)/cert.key;
-	ssl_session_timeout  5m;
-	ssl_protocols        TLSv1 TLSv1.1 TLSv1.2;
-	ssl_ciphers          ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+EXP;
-	ssl_prefer_server_ciphers   on;
-	listen      443 ssl;
-	listen [::]:443 ssl;
-	server_name $($record.Name).$domain;
-
-	# this is the internal Docker DNS, cache only for $($dnsTimeout)s
-	resolver 127.0.0.11 valid=$($dnsTimeout)s;
-	$($locations -join '
-	')
-}"
 	}
 	else{
 		$basicAuthPath = "$(Split-Path $PSScriptRoot -Parent)/mountPoints/ingress/basicAuth"
 		$htpasswordPath = "$basicAuthPath/$($record.Name).htpasswd"
+		if(-Not $dontGenneratehtpasswd){
 		$setupHTPasswd = $true
 		if(Test-Path $htpasswordPath){
 			$userResponse = Read-Host -Prompt "A htpasswd file alread exists for $($record.Name). Do you want to overwrite? (Type Yes to confirm"
@@ -130,12 +123,17 @@ server {
 				$userResponse = Read-Host -Prompt "Do you want to add another user for this service? (Yes/No)"
 			}
 		}
-
-		$outConfig += "
-$SnippetHttpToHttpsRedirect
-server {
+	}
+	$authSnippet = "
 	auth_basic           `"Administrator's Area`";
 	auth_basic_user_file /etc/nginx/basicAuth/$($record.Name).htpasswd;
+	"
+	
+	}
+	$outConfig += "
+server {
+	$SnippetclientMaxBodySize
+	$authSnippet
 	ssl_certificate /etc/nginx/conf.d/certs/$($record.Name)/cert.crt;
 	 ssl_certificate_key /etc/nginx/conf.d/certs/$($record.Name)/cert.key;
 	ssl_session_timeout  5m;
@@ -148,10 +146,11 @@ server {
 
 	# this is the internal Docker DNS, cache only for $($dnsTimeout)s
 	resolver 127.0.0.11 valid=$($dnsTimeout)s;
-	$($locations -join '\r\n')
+	$($locations -join '
+	')
 }"
-	}
-
 }
+
+
 $outConfig += "}"
 Write-Output $outConfig
