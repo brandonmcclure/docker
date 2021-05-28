@@ -58,3 +58,4 @@ volumes:
   registryMirror_data:
 networks:
     overlay:
+        driver: overlay

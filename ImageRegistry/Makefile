@@ -8,7 +8,7 @@ endif
 # -- Define your services that live in your compose files --#
 CORE_SERVICES := ${NOOP} dns certgetter ca ingress ingress_prom_exporter vault
 BACKUP := ${NOOP} registry_backup
-REGISTRY := ${NOOP} registry registryui registry_mirror
+REGISTRY := ${NOOP} registry registryui registry_mirror registry_backup
 MONITORING := ${NOOP} grafana prometheus nagios nagios_mysql prometheusblackbox homer alertmanager pushgateway squidmetrics
 ELASTIC := ${NOOP} es01 es02 es03 kib01 logstash
 PROXY := ${NOOP} squidproxy squidmetrics
@@ -106,19 +106,23 @@ images:
 
 clean: ## Remove all Containers and Delete Volume Data
 	-docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} down -v --remove-orphans
-	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,core_,${CORE_SERVICES}}
-	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,monitoring_,${MONITORING}}
-	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,misc_,${MISC}}
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,all_,${CORE_SERVICES}}
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,all_,${MONITORING}}
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,all_,${MISC}}
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,all_,${REGISTRY}}
 	-docker network prune -f
 
 deploy_core:
-	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${CORE_SERVICES_FILES}} core
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${CORE_SERVICES_FILES}} all
 
 deploy_monitoring:
-	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MONITORING_FILES}} monitoring
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MONITORING_FILES}} all
 
 deploy_misc:
-	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MISC_FILES}} misc
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MISC_FILES}} all
+
+deploy_registry:
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_REGISTRY_FILES}} all
 
 services:
 	docker service logs

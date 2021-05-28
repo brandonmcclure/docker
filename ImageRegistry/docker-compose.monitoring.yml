@@ -37,7 +37,10 @@ services:
     depends_on:
         - prometheus
     image: quay.io/prometheus/alertmanager
+    #command: --config.file=/mnt/alertmanager.yml
     restart: ${RESTART_POLICY}
+    # volumes: 
+    #     - ./mountPoints/alertmanager/alertmanager.yml:/mnt/alertmanager.yml
     networks:
       - overlay
   pushgateway:
@@ -117,3 +120,4 @@ volumes:
   nagios_mysql_data:
 networks:
     overlay:
+        driver: overlay

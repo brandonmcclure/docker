@@ -4,8 +4,6 @@ services:
   diagrams:
     image: "jgraph/drawio"
     restart: always
-    ports:
-      - 7124:8080 
     networks:
       - overlay
   scratch:
@@ -22,8 +20,6 @@ services:
     image: ghcr.io/linuxserver/code-server
     env_file: vscode.env
     restart: always
-    ports:
-      - 7126:8443
     networks:
       - overlay
   calibre:
@@ -39,4 +35,5 @@ services:
     networks:
       - overlay
 networks:
-  overlay:
+    overlay:
+        driver: overlay
