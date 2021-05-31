@@ -7,8 +7,7 @@ function CreateHtpasswd{
 		(docker run --rm -it -v ${PWD}:/work bmcclure89/docker-htpassword $($creds.Username) $($creds.GetNetworkCredential().Password)) | Add-Content "$htpasswordPath"
 }
 
-$authSnippet = ""
-$SnippetclientMaxBodySize=""
+
 
 $outConfig = "events {
     use           epoll;
@@ -38,6 +37,9 @@ if(-not $DisableIngressStub){
 }
 
 foreach($record in $config.Records){
+	$authSnippet = ""
+	$SnippetclientMaxBodySize=""
+	
 	if(-not [bool]($record.PSobject.Properties.name -match "port")){
 		continue;
 	}
@@ -131,6 +133,7 @@ foreach($record in $config.Records){
 	
 	}
 	$outConfig += "
+	$SnippetHttpToHttpsRedirect
 server {
 	$SnippetclientMaxBodySize
 	$authSnippet

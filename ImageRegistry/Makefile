@@ -8,7 +8,7 @@ endif
 # -- Define your services that live in your compose files --#
 CORE_SERVICES := ${NOOP} dns certgetter ca ingress ingress_prom_exporter vault
 BACKUP := ${NOOP} registry_backup
-REGISTRY := ${NOOP} registry registryui registry_mirror
+REGISTRY := ${NOOP} registry registryui registry_mirror registry_backup
 MONITORING := ${NOOP} grafana prometheus nagios nagios_mysql prometheusblackbox homer alertmanager pushgateway squidmetrics
 ELASTIC := ${NOOP} es01 es02 es03 kib01 logstash
 PROXY := ${NOOP} squidproxy squidmetrics
@@ -17,7 +17,8 @@ VIRUS := ${NOOP} redis mongodb consul virusscan_ui api dummy-scanner clamav-scan
 NEXTCLOUD := ${NOOP} app db
 ANALYTICS := ${NOOP} metabase
 MINIO := ${NOOP} minio1
-ALL_SERVICES := ${NOOP}${CORE_SERVICES}${MONITORING}${PROXY}${BACKUP}${MISC}${ELASTIC}${NEXTCLOUD}${ANALYTICS}${MINIO}
+MOODLE := ${NOOP} mariadb moodle moodle_data_backup mariadb_data_backup
+ALL_SERVICES := ${NOOP}${CORE_SERVICES}${MONITORING}${PROXY}${BACKUP}${MISC}${ELASTIC}${NEXTCLOUD}${ANALYTICS}${MINIO}${MOODLE}
 # -------------------------
 
 # -- Define the yml files -- #
@@ -31,7 +32,8 @@ COMPOSE_NEXTCLOUD_FILES := ${NOOP} docker-compose.nextcloud.yml
 COMPOSE_VIRUS_FILES := ${NOOP} docker-compose.virusscan.yml
 COMPOSE_ANALYTICS_FILES := ${NOOP} docker-compose.analytics.yml
 COMPOSE_MINIO_FILES := ${NOOP} docker-compose.minio.yml
-COMPOSE_ALL_FILES := ${NOOP}${CORE_SERVICES_FILES}${COMPOSE_REGISTRY_FILES}${COMPOSE_MONITORING_FILES}${COMPOSE_PROXY_FILES}${COMPOSE_MISC_FILES}${COMPOSE_NEXTCLOUD_FILES}${COMPOSE_ELASTIC_FILES}${COMPOSE_VIRUS_FILES}${COMPOSE_ANALYTICS_FILES}${COMPOSE_MINIO_FILES}
+COMPOSE_MOODLE_FILES := ${NOOP} docker-compose.moodle.yml
+COMPOSE_ALL_FILES := ${NOOP}${CORE_SERVICES_FILES}${COMPOSE_REGISTRY_FILES}${COMPOSE_MONITORING_FILES}${COMPOSE_PROXY_FILES}${COMPOSE_MISC_FILES}${COMPOSE_NEXTCLOUD_FILES}${COMPOSE_ELASTIC_FILES}${COMPOSE_VIRUS_FILES}${COMPOSE_ANALYTICS_FILES}${COMPOSE_MINIO_FILES}${COMPOSE_MOODLE_FILES}
 # -------------------------
 
 # -- Functions to help the makefile work for docker compose and docker deploy -- #
@@ -86,6 +88,9 @@ elastic:
 misc:
 	docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_MISC_FILES}} up -d --build ${MISC_SERVICES}
 
+moodle:
+	docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_MOODLE_FILES}} up -d --build ${MOODLE}
+
 down:		
 	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} down
 
@@ -106,19 +111,23 @@ images:
 
 clean: ## Remove all Containers and Delete Volume Data
 	-docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} down -v --remove-orphans
-	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,core_,${CORE_SERVICES}}
-	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,monitoring_,${MONITORING}}
-	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,misc_,${MISC}}
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,all_,${CORE_SERVICES}}
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,all_,${MONITORING}}
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,all_,${MISC}}
+	-docker service rm ${call SWARM_SERVICES_JOINED_SYNTAX,all_,${REGISTRY}}
 	-docker network prune -f
 
 deploy_core:
-	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${CORE_SERVICES_FILES}} core
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${CORE_SERVICES_FILES}} all
 
 deploy_monitoring:
-	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MONITORING_FILES}} monitoring
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MONITORING_FILES}} all
 
 deploy_misc:
-	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MISC_FILES}} misc
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_MISC_FILES}} all
+
+deploy_registry:
+	docker stack deploy ${call SWARM_FILE_JOINED_SYNTAX,${COMPOSE_REGISTRY_FILES}} all
 
 services:
 	docker service logs
