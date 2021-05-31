@@ -3,7 +3,7 @@
 param($RESTART_POLICY = 'always',
 $registryBasicAuthUsername = 'basicAuth',
 [securestring]$registryBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
-$REGISTRY_UI_URL = 'https://Registry.mcd.com:5000',
+$REGISTRY_UI_URL = 'https://Registry.example.com',
 $REGISTRY_UI_VERIFY_TLS = 'false'
 ,$SQUID_HOSTNAME = '',
 $caBasicAuthUsername = 'basicAuth',
@@ -16,6 +16,10 @@ $REGISTRY_DELETE_ENABLE = $True
 ,$ldapOrg = ""
 ,[securestring]$LDAPAdminPassword = $null
 ,[switch]$GenerateHomerConfig
+,[switch]$dontGenneratehtpasswd 
+,$moodle_sitename = "Moodle Site"
+,$moodle_adminusername = "admin"
+,$moodle_adminemail = "admin@example.com"
 )
 
 Import-Module powershell-yaml,FC_Log,FC_Core -force -ErrorAction Stop
@@ -267,7 +271,7 @@ $promConfig |replaceWith -find ".example.com" -replace ".$domain" `
 .\BuildTools\setup.certgetter.ps1 -config $config -domain $domain
 
 # Create Ingress
-$ingress = .\BuildTools\setup.ingress.ps1 -config $config -domain $domain
+$ingress = .\BuildTools\setup.ingress.ps1 -config $config -domain $domain -dontGenneratehtpasswd:$dontGenneratehtpasswd
 Set-Content -Path $mountpointRoot/ingress/nginx.conf -Value $ingress
 
 # Create homer dashboard config
@@ -275,4 +279,6 @@ if($GenerateHomerConfig){
 	.\BuildTools\setup.homer.ps1 -config $config
 }
 
-Invoke-UnixLineEndings -directory $PSScriptRoot -excludeExtensions @("mdb","MYI","MYD") -excludeFilter @("**\mointPoints\db*","**\mointPoints\homer*")
+.\BuildTools\setup.moodle.ps1 -siteName $moodle_sitename -adminUserName $moodle_adminusername -adminemail $moodle_adminemail
+
+Invoke-UnixLineEndings -directory $PSScriptRoot -excludeExtensions @("mdb","MYI","MYD") -excludeFilter ".+?\\mointPoints\\db\.+|.+?\\mointPoints\\homer\\.+|.+?\\mountPoints\\nextcloud\\data\\.+|.+?\\mountPoints\\nagios\\db\\.+" -Verbose
