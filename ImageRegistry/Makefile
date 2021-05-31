@@ -17,7 +17,8 @@ VIRUS := ${NOOP} redis mongodb consul virusscan_ui api dummy-scanner clamav-scan
 NEXTCLOUD := ${NOOP} app db
 ANALYTICS := ${NOOP} metabase
 MINIO := ${NOOP} minio1
-ALL_SERVICES := ${NOOP}${CORE_SERVICES}${MONITORING}${PROXY}${BACKUP}${MISC}${ELASTIC}${NEXTCLOUD}${ANALYTICS}${MINIO}
+MOODLE := ${NOOP} mariadb moodle moodle_data_backup mariadb_data_backup
+ALL_SERVICES := ${NOOP}${CORE_SERVICES}${MONITORING}${PROXY}${BACKUP}${MISC}${ELASTIC}${NEXTCLOUD}${ANALYTICS}${MINIO}${MOODLE}
 # -------------------------
 
 # -- Define the yml files -- #
@@ -31,7 +32,8 @@ COMPOSE_NEXTCLOUD_FILES := ${NOOP} docker-compose.nextcloud.yml
 COMPOSE_VIRUS_FILES := ${NOOP} docker-compose.virusscan.yml
 COMPOSE_ANALYTICS_FILES := ${NOOP} docker-compose.analytics.yml
 COMPOSE_MINIO_FILES := ${NOOP} docker-compose.minio.yml
-COMPOSE_ALL_FILES := ${NOOP}${CORE_SERVICES_FILES}${COMPOSE_REGISTRY_FILES}${COMPOSE_MONITORING_FILES}${COMPOSE_PROXY_FILES}${COMPOSE_MISC_FILES}${COMPOSE_NEXTCLOUD_FILES}${COMPOSE_ELASTIC_FILES}${COMPOSE_VIRUS_FILES}${COMPOSE_ANALYTICS_FILES}${COMPOSE_MINIO_FILES}
+COMPOSE_MOODLE_FILES := ${NOOP} docker-compose.moodle.yml
+COMPOSE_ALL_FILES := ${NOOP}${CORE_SERVICES_FILES}${COMPOSE_REGISTRY_FILES}${COMPOSE_MONITORING_FILES}${COMPOSE_PROXY_FILES}${COMPOSE_MISC_FILES}${COMPOSE_NEXTCLOUD_FILES}${COMPOSE_ELASTIC_FILES}${COMPOSE_VIRUS_FILES}${COMPOSE_ANALYTICS_FILES}${COMPOSE_MINIO_FILES}${COMPOSE_MOODLE_FILES}
 # -------------------------
 
 # -- Functions to help the makefile work for docker compose and docker deploy -- #
@@ -85,6 +87,9 @@ elastic:
 
 misc:
 	docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_MISC_FILES}} up -d --build ${MISC_SERVICES}
+
+moodle:
+	docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_MOODLE_FILES}} up -d --build ${MOODLE}
 
 down:		
 	@docker-compose ${call COMPOSE_FILE_JOINED_SYNTAX,${COMPOSE_ALL_FILES}} down
