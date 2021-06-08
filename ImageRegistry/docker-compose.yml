@@ -98,3 +98,5 @@ volumes:
   dhcp_leases:
 networks:
     overlay:
+        name: stack_overlay
+        driver: overlay

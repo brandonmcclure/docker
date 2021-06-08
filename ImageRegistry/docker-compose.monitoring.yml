@@ -117,3 +117,5 @@ volumes:
   nagios_mysql_data:
 networks:
     overlay:
+        external:
+            name: stack_overlay

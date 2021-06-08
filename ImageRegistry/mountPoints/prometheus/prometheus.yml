@@ -49,9 +49,6 @@
         module: [icmp]  # Look for a HTTP 200 response.
       static_configs:
         - targets:
-          - JUSTANOTHERPC
-          - HTPC
-          - freenas.example.com
           - prometheus.example.com
           - elastic.example.com
           - ca.example.com
@@ -72,6 +69,7 @@
           - https://prometheusblackbox.example.com
           - https://prometheus.example.com
           - https://elastic.example.com
+          - https://scratch.example.com
           - https://ca.example.com
           - https://graphite.example.com
       relabel_configs:
@@ -89,7 +87,8 @@
         module: [http_2xx]  # Look for a HTTP 200 response.
       static_configs:
         - targets:
-          - https://www.google.com      relabel_configs:
+          - https://www.google.com      
+      relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
         - source_labels: [__param_target]

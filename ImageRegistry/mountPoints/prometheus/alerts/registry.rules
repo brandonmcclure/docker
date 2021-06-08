@@ -1,7 +1,7 @@
 groups:
-- name: Hardware alerts
+- name: Service Up
   rules:
-  - alert: registry down
+  - alert: registry
     expr: up{job="registry"} == 0
     for: 3m
     labels:
@@ -9,3 +9,27 @@ groups:
     annotations:
       title: Registry {{ $labels.instance }} is down
       description: Failed to scrape {{ $labels.job }} on {{ $labels.instance }} for more than 3 minutes. Registry seems down.
+  - alert: ingress
+    expr: up{job="ingress"} == 0
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      title: ingress {{ $labels.instance }} is down
+      description: Failed to scrape {{ $labels.job }} on {{ $labels.instance }} for more than 3 minutes. ingress seems down.
+  - alert: coredns
+    expr: up{job="coredns"} == 0
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      title: coredns {{ $labels.instance }} is down
+      description: Failed to scrape {{ $labels.job }} on {{ $labels.instance }} for more than 3 minutes. coredns seems down.
+  - alert: pushgateway
+    expr: up{job="pushgateway"} == 0
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      title: pushgateway {{ $labels.instance }} is down
+      description: Failed to scrape {{ $labels.job }} on {{ $labels.instance }} for more than 3 minutes. pushgateway seems down.
