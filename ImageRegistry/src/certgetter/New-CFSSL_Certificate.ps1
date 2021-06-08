@@ -7,27 +7,32 @@ param(
 	$caURL = 'http://ca:8888',
 	$ca_basicaauth_Username = '',
 	$ca_basicaauth_Password = '',
-	$certOutPath = '/mnt/cfssl_certs',
-	$domainName = '.mcd.com' # Will be suffixed onto each host
+	$certOutPath = '/mnt/cfssl_certs'
 )
 $certRequests = Get-Content $certRequestsPath | ConvertFrom-Json
+$domainName = $certRequests.Domain
 $newRequests =@()
-foreach($certRequestIndex in 0..$(($certRequests | measure-object | select -ExpandProperty Count)-1)){
+foreach($certRequestIndex in 0..$(($certRequests.Records | measure-object | select -ExpandProperty Count)-1)){
 	if([string]::IsNullOrEmpty($certRequestIndex.signingProfile)){
 		$signingProfile = "default"
 	}
-	$newRequest = $certRequests[$certRequestIndex]
+	$newRequest = $certRequests.Records[$certRequestIndex]
+	$newRequest
 	$hosts = @()
 	$hosts += $newRequest.name
 	if(	 -not [string]::IsNullOrEmpty($domainName)){
-		$hosts +="$($newRequest.name)$domainName"
+		$hosts +="$($newRequest.name).$domainName"
 	}
-	foreach($certRequestIndex_HostIndex in 0..$(($newRequest.hosts | measure-object | select -ExpandProperty Count)-1)){
-		if(	 -not [string]::IsNullOrEmpty($domainName)){
-			$hosts +="$($($certRequests[$certRequestIndex].hosts[$certRequestIndex_HostIndex]))$domainName"
-		}
-		$hosts += "$($certRequests[$certRequestIndex].hosts[$certRequestIndex_HostIndex])"
 
+	$hostRange = ($newRequest.hosts | measure-object | select -ExpandProperty Count)
+	if($hostRange -gt 0){
+	foreach($certRequestIndex_HostIndex in 0..$hostRange){
+		if(	 -not [string]::IsNullOrEmpty($domainName)){
+			$hosts +="$($($certRequests.Records[$certRequestIndex].hosts[$certRequestIndex_HostIndex])).$domainName"
+		}
+		$hosts += "$($certRequests.Records[$certRequestIndex].hosts[$certRequestIndex_HostIndex])"
+
+	}
 	}
 	if($dev_bindings){
 		$hosts += @('localhost','127.0.0.1')
@@ -72,7 +77,7 @@ foreach ($request in $certRequests){
 				}
 			],
 			"CN": "'+$(if(	 -not [string]::IsNullOrEmpty($domainName)){
-				"$($request.name)$domainName"
+				"$($request.name).$domainName"
 			}else{$request.name})+'",
 		"profile":"'+$signingProfile+'"
 		}

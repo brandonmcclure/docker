@@ -24,7 +24,7 @@ $REGISTRY_DELETE_ENABLE = $True
 
 Import-Module powershell-yaml,FC_Log,FC_Core -force -ErrorAction Stop
 
-$mountpointRoot = "./mountPoints"
+$mountpointRoot = "$PSScriptRoot/mountPoints"
 $foldersToCreate = @(
     "$mountpointRoot/dnsmasq"
     ,"$mountpointRoot/ca"
@@ -45,8 +45,11 @@ $foldersToCreate = @(
 if([string]::IsNullOrEmpty($localHostAddress)){
 	Write-Log "the localHostAddress parameter was not specified, checking if the value was already set."
 	if(Test-Path localHostAddress.build){
-		Write-Log "There is a file: , loading the value there. to change this behaviour pass a value to the script or delete the file"
+		Write-Log "There is a file at localHostAddress.build, loading the localHostAddress value there. to change this behaviour pass a value to the script or delete the file"
 		$localHostAddress = Get-Content localHostAddress.build | select -first 1
+	}
+	else{
+		$localHostAddress = Read-Host -Prompt "Enter the local IP address to use for localhost"
 	}
 }
 
@@ -65,6 +68,7 @@ If (-not (Test-Path $mountpointRoot/ca/docker.key)){
 If (-not (Test-Path $mountpointRoot/ca/ca-bundle.crt)){
     Write-Error "Could not find a ca bundle at: $mountpointRoot/ca/ca-bundle.crt" -ErrorAction Stop
 }
+
 
 # Create Secure Passwords in the config
 function generatePassword() {
@@ -233,7 +237,7 @@ EMAIL_DOMAIN=$domain
 | Add-Content -Path openldap.env
 
 Write-Host "Generating CoreDNS Corefile and db"
-$config = Get-Content ./config/config.json | convertfrom-json
+$config = Get-Content $PSScriptRoot/config/config.json | convertfrom-json
 
 $mountPointPath = "$mountpointRoot/coredns"
 Remove-Item -Path $mountPointPath/Corefile -Force -errorAction Ignore 
@@ -289,7 +293,7 @@ $promConfig |replaceWith -find ".example.com" -replace ".$domain" `
 | Set-Content -Path $mountpointRoot/prometheus/prometheus.yml 
 
 # Create certgetter
-.\BuildTools\setup.certgetter.ps1 -config $config -domain $domain
+. "$PSScriptRoot\BuildTools\setup.certgetter.ps1" -config $config -domain $domain
 
 # Create Ingress
 $ingress = .\BuildTools\setup.ingress.ps1 -config $config -domain $domain -dontGenneratehtpasswd:$dontGenneratehtpasswd
