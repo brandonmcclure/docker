@@ -1,6 +1,7 @@
-{
+{"forward":[".","192.168.0.1","8.8.8.8","9.9.9.9"],
+	"domains":[
+		{
     "domain":"example.com",
-    "forward":[".","YourDNSForwarder","BackupDNSForwaderLike: 8.8.8.8"],
 	"DNS":{
 		"MNAME":"dns.","RNAME":"brandon.mcclure","SERIAL":"2015082541","REFRESH":"7200","RETRY":"3600","EXPIRE":"1209600","TTL":"3600"
 	},
@@ -33,4 +34,15 @@
 		{"Name":"virusscan","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"8888","upstreamService":"virusscan_ui"},
 		{"Name":"barcodegenerator","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost","port":"3000"}
     ]
+},
+{
+    "domain":"example.org",
+	"DNS":{
+		"MNAME":"dns.","RNAME":"brandon.mcclure","SERIAL":"2015082541","REFRESH":"7200","RETRY":"3600","EXPIRE":"1209600","TTL":"3600"
+	},
+    "Records":[
+        {"Name":"secondDomain","ZoneClass":"IN","RecordType":"A","IpAddress":"localhost"},
+    ]
 }
+
+	]

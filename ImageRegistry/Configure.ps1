@@ -9,7 +9,7 @@ $REGISTRY_UI_VERIFY_TLS = 'false'
 $caBasicAuthUsername = 'basicAuth',
 [securestring]$caBasicAuthPassword = (Convertto-SecureString 'basicAuth' -AsPlainText),
 $REGISTRY_DELETE_ENABLE = $True
-,[Parameter(Position=0,mandatory=$true)]$localHostAddress = ''
+,[Parameter(Position=0)]$localHostAddress = ''
 ,[Parameter(Position=1,mandatory=$true)]$domain = ''
 ,[securestring]$GF_SECURITY_ADMIN_PASSWORD = (Convertto-SecureString 'badPassword' -AsPlainText) # leave empty to generate a random one
 ,[string] $VSCode_TZ = 'Americas\Denver'
@@ -40,6 +40,19 @@ $foldersToCreate = @(
 [Environment]::SetEnvironmentVariable("DOCKER_CA_AUTHPASSWORD", ($caBasicAuthPassword | ConvertFrom-SecureString), "User")
 [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHUSER", $registryBasicAuthUsername, "User")
 [Environment]::SetEnvironmentVariable("DOCKER_REGISTRY_AUTHPASSWORD", ($registryBasicAuthPassword | ConvertFrom-SecureString), "User")
+
+
+if([string]::IsNullOrEmpty($localHostAddress)){
+	Write-Log "the localHostAddress parameter was not specified, checking if the value was already set."
+	if(Test-Path localHostAddress.build){
+		Write-Log "There is a file: , loading the value there. to change this behaviour pass a value to the script or delete the file"
+		$localHostAddress = Get-Content localHostAddress.build | select -first 1
+	}
+}
+
+if(-not (Test-Path localHostAddress.build)){
+	$localHostAddress | Set-Content localHostAddress.build
+} 
 
 foreach($f in $foldersToCreate){If(-not (Test-Path $f)){New-Item $f -Force -ItemType Directory}}
 # Check for docker.crt, docker.key  and ca-bundle.crt in the /config/ca
@@ -223,30 +236,33 @@ Write-Host "Generating CoreDNS Corefile and db"
 $config = Get-Content ./config/config.json | convertfrom-json
 
 $mountPointPath = "$mountpointRoot/coredns"
-
 Remove-Item -Path $mountPointPath/Corefile -Force -errorAction Ignore 
 
 if (-not (Test-Path "$mountPointPath/Corefile")){
     New-Item "$mountPointPath/Corefile" -type File -Force -ErrorAction Stop
 }
-".:53 {
+$coreFileContents = ".:53 {
     forward $($config.forward -join " " )
     log
     errors
 }
+"
 
-$($config.domain):53 {
-    file /root/$($config.domain).db
+foreach ($dnsDomain in $config.domains){
+	$domain = $dnsDomain.domain
+$coreFileContents +="$($dnsDomain.domain):53 {
+    file /root/$($dnsDomain.domain).db
     log
     errors
-    health :5353
-    prometheus :9253
-}" | Set-Content -Path $mountPointPath/Corefile
+    health :$($dnsDomain.healthPort)
+    prometheus :$($dnsDomain.prometheus)
+}
+"
 
-Remove-Item -Path $mountPointPath/$($config.domain).db -Force -errorAction Ignore 
-$SOARecord = $config.Records | where {$_.RecordType -eq "SOA"}
+Remove-Item -Path $mountPointPath/$($dnsDomain.domain).db -Force -errorAction Ignore 
+$SOARecord = $dnsDomain.Records | where {$_.RecordType -eq "SOA"}
 Write-Log "Creating $($SOARecord | Measure-Object | Select -expandproperty count) SOARecord records" Verbose
-$ARecords = $config.Records | where {$_.RecordType -eq "A"}
+$ARecords = $dnsDomain.Records | where {$_.RecordType -eq "A"}
 Write-Log "Creating $($ARecords | Measure-Object | Select -expandproperty count) A records" Verbose
 $ARecordString = ""
 foreach ($record in $ARecords){
@@ -255,11 +271,16 @@ foreach ($record in $ARecords){
 }
 
 
-    $SOAString = "$domain. IN SOA $($config.DNS.MNAME)$domain. $($config.DNS.RNAME)$domain $($config.DNS.SERIAL) $($config.DNS.REFRESH) $($config.DNS.RETRY) $($config.DNS.EXPIRE) $($config.DNS.TTL)
+    $SOAString = "$domain. IN SOA $($dnsDomain.DNS.MNAME)$domain. $($dnsDomain.DNS.RNAME)$domain $($dnsDomain.DNS.SERIAL) $($dnsDomain.DNS.REFRESH) $($dnsDomain.DNS.RETRY) $($dnsDomain.DNS.EXPIRE) $($dnsDomain.DNS.TTL)
 "
 
 
-"$SOAString$ARecordString" | Set-Content -Path $mountPointPath/$($config.domain).db
+"$SOAString$ARecordString" | Set-Content -Path $mountPointPath/$($dnsDomain.domain).db
+ }
+ 
+ $coreFileContents | Set-Content -Path $mountPointPath/Corefile
+
+
 
 #Update Prometheus.yml
 $promConfig = Get-Content $mountpointRoot/prometheus/prometheus.yml 

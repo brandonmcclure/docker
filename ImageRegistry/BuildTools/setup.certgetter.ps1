@@ -3,7 +3,11 @@ param(
 	,$domain
 	)
 Write-Log "Configureing the certgetter"
-$out = $config.Records | Select hosts,name,uid,gid,signingProfile
+$out = @()
+foreach ($d in $config.Domains){
+	$out += $d.Records | Select hosts,name,uid,gid,signingProfile
+}
+
 $data = $out | ConvertTo-Json -depth 5 
 
 set-content -Value $data -Path "$(Split-Path $PSScriptRoot -Parent)\mountPoints\certgetter\certrequests.json"
