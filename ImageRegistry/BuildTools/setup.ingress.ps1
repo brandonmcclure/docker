@@ -35,8 +35,9 @@ if(-not $DisableIngressStub){
 	}
 	}"
 }
-
-foreach($record in $config.Records){
+foreach ($dnsDomain in $config.domains){
+	$domain = $dnsDomain.Domain
+foreach($record in $dnsDomain.Records){
 	$authSnippet = ""
 	$SnippetclientMaxBodySize=""
 	
@@ -96,11 +97,7 @@ foreach($record in $config.Records){
 	}
 	 
 
-	if(-not [bool]($record.PSobject.Properties.name -match "Authentication")){
-		
-		
-	}
-	else{
+	if([bool]($record.PSobject.Properties.name -match "Authentication")){
 		$basicAuthPath = "$(Split-Path $PSScriptRoot -Parent)/mountPoints/ingress/basicAuth"
 		$htpasswordPath = "$basicAuthPath/$($record.Name).htpasswd"
 		if(-Not $dontGenneratehtpasswd){
@@ -152,6 +149,7 @@ server {
 	$($locations -join '
 	')
 }"
+}
 }
 
 
